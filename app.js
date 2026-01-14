@@ -1,4 +1,8 @@
-// Расписание уроков
+// Конфигурация
+const API_URL = 'http://localhost:8080'; // Заменить на реальный URL API
+const USE_LOCAL = true; // true = локальные данные, false = API
+
+// Расписание (локальная копия)
 const SCHEDULE = {
     "ПН": [
         { time: "08:00–08:40", subject: "Душный час", room: "403" },
@@ -54,66 +58,44 @@ const SCHEDULE = {
     "ВС": [],
 };
 
-// Эмодзи для предметов
-const SUBJECT_EMOJI = {
-    "Алгебра": "📐",
-    "Геометрия": "📐",
-    "Математика": "📐",
-    "Вероятность": "🎲",
-    "Рус яз": "📝",
-    "Лит-ра": "📚",
-    "Англ яз": "🇬🇧",
-    "Физика": "⚛️",
-    "Химия": "🧪",
-    "Биология": "🧬",
-    "Информатика": "💻",
-    "История": "🏛️",
-    "Общество": "👥",
-    "География": "🌍",
-    "Физра": "🏃",
-    "Хореография": "💃",
-    "Душный час": "😴",
-    "ОБЗР": "🛡️",
-    "Изб. Право": "⚖️",
-    "Татарский/Русский": "🗣️",
+const DAYS_MAP = { 0: "ПН", 1: "ВТ", 2: "СР", 3: "ЧТ", 4: "ПТ", 5: "СБ", 6: "ВС" };
+const DAYS_FULL = {
+    "ПН": "Понедельник", "ВТ": "Вторник", "СР": "Среда",
+    "ЧТ": "Четверг", "ПТ": "Пятница", "СБ": "Суббота", "ВС": "Воскресенье"
 };
 
-const DAYS_ORDER = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"];
-const DAYS_MAP = { 0: "ПН", 1: "ВТ", 2: "СР", 3: "ЧТ", 4: "ПТ", 5: "СБ", 6: "ВС" };
-
 let currentDay = getTodayKey();
-let updateInterval;
+let notes = {};
+let settings = {
+    notifications: true,
+    notify_before: 5,
+    morning_digest: true,
+    morning_hour: 7,
+    morning_minute: 30
+};
+let userId = 'default';
+let currentNoteKey = null;
 
-// Инициализация Telegram WebApp
+// Telegram WebApp
 function initTelegram() {
     if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
         
-        // Применяем тему Telegram
-        if (tg.colorScheme === 'light') {
-            document.body.classList.add('tg-theme-light');
-        }
+        tg.setHeaderColor('#7c5cff');
+        tg.setBackgroundColor('#0d0d0f');
         
-        // Устанавливаем цвет хедера
-        tg.setHeaderColor('#8b5cf6');
-        tg.setBackgroundColor(tg.colorScheme === 'light' ? '#f0f2f5' : '#0a0a0f');
-        
-        // Получаем данные пользователя и аватарку
         if (tg.initDataUnsafe?.user) {
             const user = tg.initDataUnsafe.user;
-            const avatar = document.getElementById('userAvatar');
+            userId = String(user.id);
             
-            // Если есть фото профиля
+            const avatar = document.getElementById('userAvatar');
             if (user.photo_url) {
                 avatar.src = user.photo_url;
             } else {
-                // Генерируем аватарку с инициалами
-                const initials = (user.first_name?.[0] || '') + (user.last_name?.[0] || '');
-                const colors = ['#8b5cf6', '#6366f1', '#ec4899', '#10b981', '#f59e0b'];
-                const color = colors[user.id % colors.length];
-                avatar.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50' y='62' text-anchor='middle' fill='white' font-size='36' font-weight='600' font-family='Inter,sans-serif'%3E${initials}%3C/text%3E%3C/svg%3E`;
+                const initial = (user.first_name?.[0] || '?').toUpperCase();
+                avatar.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%237c5cff'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='16' font-weight='600'%3E${initial}%3C/text%3E%3C/svg%3E`;
             }
         }
     }
@@ -124,18 +106,11 @@ function getTodayKey() {
     return DAYS_MAP[day === 0 ? 6 : day - 1];
 }
 
-function getEmoji(subject) {
-    for (const [key, emoji] of Object.entries(SUBJECT_EMOJI)) {
-        if (subject.includes(key)) return emoji;
-    }
-    return "📖";
-}
-
 function parseTime(timeStr) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    return date;
+    const [h, m] = timeStr.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return d;
 }
 
 function getCurrentLessonInfo(dayKey) {
@@ -143,34 +118,30 @@ function getCurrentLessonInfo(dayKey) {
     const now = new Date();
     
     for (let i = 0; i < lessons.length; i++) {
-        const lesson = lessons[i];
-        const [startStr, endStr] = lesson.time.split('–');
+        const [startStr, endStr] = lessons[i].time.split('–');
         const start = parseTime(startStr);
         const end = parseTime(endStr);
         
         if (now >= start && now <= end) {
-            const totalDuration = (end - start) / 1000 / 60;
+            const total = (end - start) / 1000 / 60;
             const elapsed = (now - start) / 1000 / 60;
             const remaining = Math.ceil((end - now) / 1000 / 60);
-            const progress = (elapsed / totalDuration) * 100;
-            
             return {
                 type: 'lesson',
-                lesson,
+                lesson: lessons[i],
                 index: i,
                 remaining,
-                progress,
-                nextLesson: lessons[i + 1] || null
+                progress: (elapsed / total) * 100,
+                next: lessons[i + 1] || null
             };
         }
         
         if (now < start) {
-            const minsUntil = Math.ceil((start - now) / 1000 / 60);
             return {
                 type: 'break',
-                nextLesson: lesson,
+                next: lessons[i],
                 nextIndex: i,
-                minsUntil
+                minsUntil: Math.ceil((start - now) / 1000 / 60)
             };
         }
     }
@@ -178,12 +149,18 @@ function getCurrentLessonInfo(dayKey) {
     return { type: 'ended' };
 }
 
-function updateCurrentLessonCard() {
+// Обновление времени каждую секунду
+function updateTime() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = 
+        now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateCurrentLesson() {
     const todayKey = getTodayKey();
-    const card = document.getElementById('currentLessonCard');
     const section = document.getElementById('currentLessonSection');
+    const card = document.getElementById('currentLessonCard');
     
-    // Показываем карточку только для сегодняшнего дня
     if (currentDay !== todayKey) {
         section.style.display = 'none';
         return;
@@ -192,45 +169,32 @@ function updateCurrentLessonCard() {
     section.style.display = 'block';
     const info = getCurrentLessonInfo(todayKey);
     
-    card.classList.remove('active', 'break', 'ended');
+    card.className = 'current-lesson-card';
     
     if (info.type === 'lesson') {
         card.classList.add('active');
-        document.getElementById('lessonStatus').innerHTML = `
-            <span class="status-dot"></span>
-            <span class="status-text">Сейчас идёт</span>
-        `;
-        document.getElementById('currentSubject').textContent = 
-            `${getEmoji(info.lesson.subject)} ${info.lesson.subject}`;
+        document.getElementById('statusText').textContent = 'Сейчас идёт';
+        document.getElementById('currentSubject').textContent = info.lesson.subject;
         document.getElementById('currentTimeRange').textContent = info.lesson.time;
-        document.getElementById('currentRoom').textContent = `Каб. ${info.lesson.room}`;
+        document.getElementById('currentRoom').textContent = `каб. ${info.lesson.room}`;
         document.getElementById('progressBar').style.width = `${info.progress}%`;
-        document.getElementById('timeLeft').textContent = `Осталось ${info.remaining} мин`;
-        
+        document.getElementById('timeLeft').textContent = `${info.remaining} мин`;
     } else if (info.type === 'break') {
         card.classList.add('break');
-        document.getElementById('lessonStatus').innerHTML = `
-            <span class="status-dot"></span>
-            <span class="status-text">Перемена</span>
-        `;
-        document.getElementById('currentSubject').textContent = 
-            `${getEmoji(info.nextLesson.subject)} ${info.nextLesson.subject}`;
-        document.getElementById('currentTimeRange').textContent = info.nextLesson.time;
-        document.getElementById('currentRoom').textContent = `Каб. ${info.nextLesson.room}`;
+        document.getElementById('statusText').textContent = 'Перемена';
+        document.getElementById('currentSubject').textContent = info.next.subject;
+        document.getElementById('currentTimeRange').textContent = info.next.time;
+        document.getElementById('currentRoom').textContent = `каб. ${info.next.room}`;
         document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('timeLeft').textContent = `Через ${info.minsUntil} мин`;
-        
+        document.getElementById('timeLeft').textContent = `через ${info.minsUntil} мин`;
     } else {
         card.classList.add('ended');
-        document.getElementById('lessonStatus').innerHTML = `
-            <span class="status-dot"></span>
-            <span class="status-text">Уроки закончились</span>
-        `;
-        document.getElementById('currentSubject').textContent = '🎉 Свобода!';
+        document.getElementById('statusText').textContent = 'Уроки закончились';
+        document.getElementById('currentSubject').textContent = 'Свободен';
         document.getElementById('currentTimeRange').textContent = '';
         document.getElementById('currentRoom').textContent = '';
         document.getElementById('progressBar').style.width = '100%';
-        document.getElementById('timeLeft').textContent = 'Отдыхай!';
+        document.getElementById('timeLeft').textContent = '';
     }
 }
 
@@ -240,12 +204,11 @@ function renderSchedule(dayKey) {
     const todayKey = getTodayKey();
     const currentInfo = dayKey === todayKey ? getCurrentLessonInfo(dayKey) : null;
     
-    if (lessons.length === 0) {
+    if (!lessons.length) {
         list.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-emoji">🎉</div>
-                <div class="empty-state-text">Выходной!</div>
-                <div class="empty-state-subtext">Отдыхай и набирайся сил</div>
+                <div class="empty-state-text">Выходной</div>
+                <div class="empty-state-subtext">Отдыхай</div>
             </div>
         `;
         document.getElementById('totalLessons').textContent = '0';
@@ -253,16 +216,19 @@ function renderSchedule(dayKey) {
         return;
     }
     
-    list.innerHTML = lessons.map((lesson, index) => {
-        const emoji = getEmoji(lesson.subject);
+    list.innerHTML = lessons.map((lesson, i) => {
+        const noteKey = `${dayKey}_${i}`;
+        const hasNote = notes[noteKey]?.trim();
+        
         let cardClass = 'lesson-card';
+        if (hasNote) cardClass += ' has-note';
         
         if (currentInfo) {
-            if (currentInfo.type === 'lesson' && currentInfo.index === index) {
+            if (currentInfo.type === 'lesson' && currentInfo.index === i) {
                 cardClass += ' current';
-            } else if (currentInfo.type === 'lesson' && index < currentInfo.index) {
+            } else if (currentInfo.type === 'lesson' && i < currentInfo.index) {
                 cardClass += ' past';
-            } else if (currentInfo.type === 'break' && index < currentInfo.nextIndex) {
+            } else if (currentInfo.type === 'break' && i < currentInfo.nextIndex) {
                 cardClass += ' past';
             } else if (currentInfo.type === 'ended') {
                 cardClass += ' past';
@@ -270,11 +236,13 @@ function renderSchedule(dayKey) {
         }
         
         return `
-            <div class="${cardClass}" style="animation-delay: ${index * 0.05}s">
-                <div class="lesson-number">${index + 1}</div>
-                <div class="lesson-emoji">${emoji}</div>
+            <div class="${cardClass}" data-day="${dayKey}" data-index="${i}">
+                <div class="lesson-number">${i + 1}</div>
                 <div class="lesson-info">
-                    <div class="lesson-subject">${lesson.subject}</div>
+                    <div class="lesson-subject">
+                        ${lesson.subject}
+                        ${hasNote ? '<span class="note-indicator"></span>' : ''}
+                    </div>
                     <div class="lesson-time">${lesson.time}</div>
                 </div>
                 <div class="lesson-room">${lesson.room}</div>
@@ -282,20 +250,149 @@ function renderSchedule(dayKey) {
         `;
     }).join('');
     
-    // Обновляем статистику
     document.getElementById('totalLessons').textContent = lessons.length;
-    const lastLesson = lessons[lessons.length - 1];
-    const endTime = lastLesson.time.split('–')[1];
-    document.getElementById('endTime').textContent = endTime;
+    document.getElementById('endTime').textContent = lessons[lessons.length - 1].time.split('–')[1];
+    
+    // Клики на карточки
+    list.querySelectorAll('.lesson-card').forEach(card => {
+        card.addEventListener('click', () => openNoteModal(card.dataset.day, parseInt(card.dataset.index)));
+    });
 }
 
-function updateTime() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('ru-RU', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+function openNoteModal(dayKey, index) {
+    const lesson = SCHEDULE[dayKey][index];
+    currentNoteKey = `${dayKey}_${index}`;
+    
+    document.getElementById('modalSubject').textContent = lesson.subject;
+    document.getElementById('modalDetails').textContent = `${DAYS_FULL[dayKey]} · ${lesson.time} · каб. ${lesson.room}`;
+    document.getElementById('noteText').value = notes[currentNoteKey] || '';
+    
+    document.getElementById('noteModal').classList.add('active');
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').classList.remove('active');
+    currentNoteKey = null;
+}
+
+async function saveNote() {
+    const text = document.getElementById('noteText').value.trim();
+    
+    if (text) {
+        notes[currentNoteKey] = text;
+    } else {
+        delete notes[currentNoteKey];
+    }
+    
+    // Сохраняем локально
+    localStorage.setItem('schedule_notes', JSON.stringify(notes));
+    
+    // Отправляем на сервер если есть API
+    if (!USE_LOCAL) {
+        try {
+            await fetch(`${API_URL}/api/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: currentNoteKey, text })
+            });
+        } catch (e) {
+            console.log('API недоступен');
+        }
+    }
+    
+    closeNoteModal();
+    renderSchedule(currentDay);
+}
+
+function deleteNote() {
+    document.getElementById('noteText').value = '';
+    saveNote();
+}
+
+// Настройки
+function loadSettings() {
+    const saved = localStorage.getItem('schedule_settings_' + userId);
+    if (saved) {
+        settings = { ...settings, ...JSON.parse(saved) };
+    }
+    updateSettingsUI();
+}
+
+function updateSettingsUI() {
+    const notifToggle = document.getElementById('toggleNotifications');
+    const morningToggle = document.getElementById('toggleMorning');
+    
+    notifToggle.classList.toggle('active', settings.notifications);
+    morningToggle.classList.toggle('active', settings.morning_digest);
+    
+    document.getElementById('notifyBefore').value = settings.notify_before;
+    
+    const h = String(settings.morning_hour).padStart(2, '0');
+    const m = String(settings.morning_minute).padStart(2, '0');
+    document.getElementById('morningTime').value = `${h}:${m}`;
+}
+
+async function saveSettings() {
+    localStorage.setItem('schedule_settings_' + userId, JSON.stringify(settings));
+    
+    if (!USE_LOCAL) {
+        try {
+            await fetch(`${API_URL}/api/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, settings })
+            });
+        } catch (e) {
+            console.log('API недоступен');
+        }
+    }
+}
+
+function initSettings() {
+    document.getElementById('toggleNotifications').addEventListener('click', () => {
+        settings.notifications = !settings.notifications;
+        updateSettingsUI();
+        saveSettings();
     });
-    document.getElementById('currentTime').textContent = timeStr;
+    
+    document.getElementById('toggleMorning').addEventListener('click', () => {
+        settings.morning_digest = !settings.morning_digest;
+        updateSettingsUI();
+        saveSettings();
+    });
+    
+    document.getElementById('notifyBefore').addEventListener('change', (e) => {
+        settings.notify_before = parseInt(e.target.value);
+        saveSettings();
+    });
+    
+    document.getElementById('morningTime').addEventListener('change', (e) => {
+        const [h, m] = e.target.value.split(':').map(Number);
+        settings.morning_hour = h;
+        settings.morning_minute = m;
+        saveSettings();
+    });
+}
+
+function initViewTabs() {
+    const tabs = document.querySelectorAll('.view-tab');
+    const scheduleView = document.getElementById('scheduleView');
+    const settingsView = document.getElementById('settingsView');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            if (tab.dataset.view === 'schedule') {
+                scheduleView.style.display = 'block';
+                settingsView.style.display = 'none';
+            } else {
+                scheduleView.style.display = 'none';
+                settingsView.style.display = 'block';
+            }
+        });
+    });
 }
 
 function initDayTabs() {
@@ -305,12 +402,9 @@ function initDayTabs() {
     tabs.forEach(tab => {
         const day = tab.dataset.day;
         
-        // Отмечаем сегодняшний день
         if (day === todayKey) {
             tab.classList.add('today');
         }
-        
-        // Активный таб
         if (day === currentDay) {
             tab.classList.add('active');
         }
@@ -320,29 +414,64 @@ function initDayTabs() {
             tab.classList.add('active');
             currentDay = day;
             renderSchedule(day);
-            updateCurrentLessonCard();
+            updateCurrentLesson();
         });
     });
 }
 
-function startUpdates() {
-    updateTime();
-    updateCurrentLessonCard();
+function initModal() {
+    document.getElementById('closeModal').addEventListener('click', closeNoteModal);
+    document.getElementById('saveNote').addEventListener('click', saveNote);
+    document.getElementById('deleteNote').addEventListener('click', deleteNote);
     
-    // Обновляем каждую минуту
-    updateInterval = setInterval(() => {
+    document.getElementById('noteModal').addEventListener('click', (e) => {
+        if (e.target.id === 'noteModal') closeNoteModal();
+    });
+}
+
+async function loadNotes() {
+    // Сначала из localStorage
+    const saved = localStorage.getItem('schedule_notes');
+    if (saved) {
+        notes = JSON.parse(saved);
+    }
+    
+    // Потом с сервера если есть
+    if (!USE_LOCAL) {
+        try {
+            const res = await fetch(`${API_URL}/api/notes`);
+            notes = await res.json();
+            localStorage.setItem('schedule_notes', JSON.stringify(notes));
+        } catch (e) {
+            console.log('API недоступен, используем локальные данные');
+        }
+    }
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', async () => {
+    initTelegram();
+    await loadNotes();
+    loadSettings();
+    initDayTabs();
+    initViewTabs();
+    initSettings();
+    initModal();
+    renderSchedule(currentDay);
+    
+    // Обновление каждую секунду
+    updateTime();
+    updateCurrentLesson();
+    
+    setInterval(() => {
         updateTime();
-        updateCurrentLessonCard();
+        updateCurrentLesson();
+    }, 1000);
+    
+    // Перерисовка расписания каждую минуту
+    setInterval(() => {
         if (currentDay === getTodayKey()) {
             renderSchedule(currentDay);
         }
     }, 60000);
-}
-
-// Инициализация
-document.addEventListener('DOMContentLoaded', () => {
-    initTelegram();
-    initDayTabs();
-    renderSchedule(currentDay);
-    startUpdates();
 });

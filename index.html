@@ -3,62 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>📚 Расписание</title>
+    <title>Расписание</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <img class="user-avatar" id="userAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%238b5cf6'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='40' font-family='sans-serif'%3E📚%3C/text%3E%3C/svg%3E" alt="Avatar">
+                    <img class="user-avatar" id="userAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%237c5cff'/%3E%3C/svg%3E" alt="">
                     <h1>Расписание</h1>
                 </div>
-                <div class="current-time" id="currentTime"></div>
+                <div class="current-time" id="currentTime">--:--</div>
             </div>
         </header>
 
-        <!-- Current Lesson Card -->
-        <section class="current-lesson-section" id="currentLessonSection">
-            <div class="current-lesson-card" id="currentLessonCard">
-                <div class="lesson-status" id="lessonStatus">
-                    <span class="status-dot"></span>
-                    <span class="status-text">Сейчас идёт</span>
-                </div>
-                <div class="current-lesson-info">
-                    <div class="current-subject" id="currentSubject">Загрузка...</div>
-                    <div class="current-details">
-                        <span class="current-time-range" id="currentTimeRange">--:-- – --:--</span>
-                        <span class="current-room" id="currentRoom">Каб. ---</span>
-                    </div>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                <div class="time-left" id="timeLeft">-- мин</div>
-            </div>
-        </section>
-
-        <!-- Day Tabs -->
-        <nav class="day-tabs">
-            <button class="day-tab" data-day="ПН"><span>Пн</span></button>
-            <button class="day-tab" data-day="ВТ"><span>Вт</span></button>
-            <button class="day-tab" data-day="СР"><span>Ср</span></button>
-            <button class="day-tab" data-day="ЧТ"><span>Чт</span></button>
-            <button class="day-tab" data-day="ПТ"><span>Пт</span></button>
-            <button class="day-tab" data-day="СБ"><span>Сб</span></button>
+        <nav class="view-tabs">
+            <button class="view-tab active" data-view="schedule">Расписание</button>
+            <button class="view-tab" data-view="settings">Настройки</button>
         </nav>
 
-        <!-- Schedule List -->
-        <main class="schedule-container">
-            <div class="schedule-list" id="scheduleList"></div>
-        </main>
+        <div id="scheduleView">
+            <section class="current-lesson-section" id="currentLessonSection">
+                <div class="current-lesson-card" id="currentLessonCard">
+                    <div class="lesson-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text" id="statusText">Загрузка</span>
+                    </div>
+                    <div class="current-subject" id="currentSubject">—</div>
+                    <div class="current-details">
+                        <span id="currentTimeRange">--:-- – --:--</span>
+                        <span id="currentRoom">—</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="time-left" id="timeLeft">—</div>
+                </div>
+            </section>
 
-        <!-- Stats Footer -->
+            <nav class="day-tabs">
+                <button class="day-tab" data-day="ПН">Пн</button>
+                <button class="day-tab" data-day="ВТ">Вт</button>
+                <button class="day-tab" data-day="СР">Ср</button>
+                <button class="day-tab" data-day="ЧТ">Чт</button>
+                <button class="day-tab" data-day="ПТ">Пт</button>
+                <button class="day-tab" data-day="СБ">Сб</button>
+            </nav>
+
+            <main class="schedule-container">
+                <div class="schedule-list" id="scheduleList"></div>
+            </main>
+        </div>
+
+        <div id="settingsView" style="display: none;">
+            <div class="settings-panel">
+                <div class="settings-title">Уведомления</div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Напоминания о уроках</span>
+                    <div class="toggle" id="toggleNotifications"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">За сколько минут</span>
+                    <select id="notifyBefore" class="setting-select">
+                        <option value="3">3 мин</option>
+                        <option value="5">5 мин</option>
+                        <option value="10">10 мин</option>
+                        <option value="15">15 мин</option>
+                    </select>
+                </div>
+                
+                <div class="settings-title" style="margin-top: 20px;">Утренний дайджест</div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Включён</span>
+                    <div class="toggle" id="toggleMorning"></div>
+                </div>
+                
+                <div class="setting-item">
+                    <span class="setting-label">Время</span>
+                    <input type="time" id="morningTime" class="setting-input" value="07:30">
+                </div>
+            </div>
+        </div>
+
         <footer class="stats-footer">
             <div class="stat-item">
                 <span class="stat-value" id="totalLessons">0</span>
@@ -69,6 +100,25 @@
                 <span class="stat-label">конец</span>
             </div>
         </footer>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal-overlay" id="noteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Заметка</span>
+                <button class="modal-close" id="closeModal">×</button>
+            </div>
+            <div class="modal-lesson-info">
+                <div class="modal-lesson-subject" id="modalSubject">—</div>
+                <div class="modal-lesson-details" id="modalDetails">—</div>
+            </div>
+            <textarea class="note-textarea" id="noteText" placeholder="Напиши заметку..."></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="deleteNote">Удалить</button>
+                <button class="btn btn-primary" id="saveNote">Сохранить</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
