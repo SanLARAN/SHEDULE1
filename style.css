@@ -1,0 +1,433 @@
+:root {
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-card: #242424;
+    --bg-card-hover: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #666666;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --success: #00b894;
+    --warning: #fdcb6e;
+    --danger: #e17055;
+    --border: #333333;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --radius: 16px;
+    --radius-sm: 10px;
+}
+
+/* Telegram theme adaptation */
+body.tg-theme-light {
+    --bg-primary: #f5f5f7;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f0f0f2;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border: #e0e0e0;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app {
+    max-width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 80px;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--accent) 0%, #8b7cf7 100%);
+    padding: 20px 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+.current-time {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+/* Current Lesson Section */
+.current-lesson-section {
+    padding: 0 16px;
+    margin-top: -12px;
+    position: relative;
+    z-index: 50;
+}
+
+.current-lesson-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.current-lesson-card.break {
+    border-left: 4px solid var(--warning);
+}
+
+.current-lesson-card.active {
+    border-left: 4px solid var(--success);
+}
+
+.current-lesson-card.ended {
+    border-left: 4px solid var(--text-muted);
+}
+
+.lesson-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+
+.current-lesson-card.break .status-dot {
+    background: var(--warning);
+}
+
+.current-lesson-card.ended .status-dot {
+    background: var(--text-muted);
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.status-text {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.current-lesson-info {
+    margin-bottom: 12px;
+}
+
+.current-subject {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.current-details {
+    display: flex;
+    gap: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.progress-container {
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 3px;
+    transition: width 1s ease;
+    width: 0%;
+}
+
+.time-left {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* Day Tabs */
+.day-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.day-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.day-tab {
+    flex: 1;
+    min-width: 48px;
+    padding: 12px 8px;
+    border: none;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+}
+
+.day-tab:hover {
+    background: var(--bg-card-hover);
+}
+
+.day-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.day-tab.today {
+    position: relative;
+}
+
+.day-tab.today::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+}
+
+.day-tab.today.active::after {
+    background: white;
+}
+
+/* Schedule List */
+.schedule-container {
+    flex: 1;
+    padding: 0 16px;
+}
+
+.schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lesson-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.lesson-card:hover {
+    background: var(--bg-card-hover);
+    transform: translateX(4px);
+}
+
+.lesson-card.current {
+    border-left: 4px solid var(--success);
+    background: rgba(0, 184, 148, 0.1);
+}
+
+.lesson-card.past {
+    opacity: 0.5;
+}
+
+.lesson-number {
+    width: 28px;
+    height: 28px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.lesson-card.current .lesson-number {
+    background: var(--success);
+    color: white;
+}
+
+.lesson-emoji {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.lesson-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-subject {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lesson-time {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.lesson-room {
+    background: var(--bg-secondary);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-state-emoji {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.empty-state-text {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.empty-state-subtext {
+    font-size: 14px;
+    margin-top: 8px;
+    color: var(--text-muted);
+}
+
+/* Stats Footer */
+.stats-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-around;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lesson-card {
+    animation: slideIn 0.3s ease forwards;
+}
+
+.lesson-card:nth-child(1) { animation-delay: 0.05s; }
+.lesson-card:nth-child(2) { animation-delay: 0.1s; }
+.lesson-card:nth-child(3) { animation-delay: 0.15s; }
+.lesson-card:nth-child(4) { animation-delay: 0.2s; }
+.lesson-card:nth-child(5) { animation-delay: 0.25s; }
+.lesson-card:nth-child(6) { animation-delay: 0.3s; }
+.lesson-card:nth-child(7) { animation-delay: 0.35s; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}

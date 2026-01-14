@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📚 Расписание</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>📚 Расписание</h1>
+                <div class="current-time" id="currentTime"></div>
+            </div>
+        </header>
+
+        <!-- Current Lesson Card -->
+        <section class="current-lesson-section" id="currentLessonSection">
+            <div class="current-lesson-card" id="currentLessonCard">
+                <div class="lesson-status" id="lessonStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Сейчас идёт</span>
+                </div>
+                <div class="current-lesson-info">
+                    <div class="current-subject" id="currentSubject">Загрузка...</div>
+                    <div class="current-details">
+                        <span class="current-time-range" id="currentTimeRange">--:-- – --:--</span>
+                        <span class="current-room" id="currentRoom">Каб. ---</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="time-left" id="timeLeft">-- мин</div>
+            </div>
+        </section>
+
+        <!-- Day Tabs -->
+        <nav class="day-tabs">
+            <button class="day-tab" data-day="ПН">Пн</button>
+            <button class="day-tab" data-day="ВТ">Вт</button>
+            <button class="day-tab" data-day="СР">Ср</button>
+            <button class="day-tab" data-day="ЧТ">Чт</button>
+            <button class="day-tab" data-day="ПТ">Пт</button>
+            <button class="day-tab" data-day="СБ">Сб</button>
+        </nav>
+
+        <!-- Schedule List -->
+        <main class="schedule-container">
+            <div class="schedule-list" id="scheduleList"></div>
+        </main>
+
+        <!-- Stats Footer -->
+        <footer class="stats-footer">
+            <div class="stat-item">
+                <span class="stat-value" id="totalLessons">0</span>
+                <span class="stat-label">уроков</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="endTime">--:--</span>
+                <span class="stat-label">конец</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
