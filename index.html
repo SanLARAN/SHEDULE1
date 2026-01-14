@@ -106,15 +106,17 @@
     <div class="modal-overlay" id="noteModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">Заметка</span>
+                <span class="modal-title">📝 Заметка</span>
                 <button class="modal-close" id="closeModal">×</button>
             </div>
             <div class="modal-lesson-info">
                 <div class="modal-lesson-subject" id="modalSubject">—</div>
                 <div class="modal-lesson-details" id="modalDetails">—</div>
             </div>
-            <textarea class="note-textarea" id="noteText" placeholder="Напиши заметку..."></textarea>
+            <div class="note-author" id="noteAuthor" style="display: none;"></div>
+            <textarea class="note-textarea" id="noteText" placeholder="Напиши заметку (видна всем)..."></textarea>
             <div class="modal-actions">
+                <button class="btn btn-like" id="likeBtn" style="display: none;">🤍</button>
                 <button class="btn btn-secondary" id="deleteNote">Удалить</button>
                 <button class="btn btn-primary" id="saveNote">Сохранить</button>
             </div>

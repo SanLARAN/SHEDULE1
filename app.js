@@ -65,7 +65,7 @@ const DAYS_FULL = {
 };
 
 let currentDay = getTodayKey();
-let notes = {};
+let notes = {}; // {"ПН_0": {text: "...", author: "Имя", author_id: 123, likes: [456]}}
 let settings = {
     notifications: true,
     notify_before: 5,
@@ -73,7 +73,8 @@ let settings = {
     morning_hour: 7,
     morning_minute: 30
 };
-let userId = 'default';
+let userId = 0;
+let userName = 'Аноним';
 let currentNoteKey = null;
 
 // Telegram WebApp
@@ -88,7 +89,8 @@ function initTelegram() {
         
         if (tg.initDataUnsafe?.user) {
             const user = tg.initDataUnsafe.user;
-            userId = String(user.id);
+            userId = user.id;
+            userName = user.first_name + (user.last_name ? ' ' + user.last_name[0] + '.' : '');
             
             const avatar = document.getElementById('userAvatar');
             if (user.photo_url) {
@@ -207,7 +209,7 @@ function renderSchedule(dayKey) {
     if (!lessons.length) {
         list.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-text">Выходной</div>
+                <div class="empty-state-text">🎉 Выходной</div>
                 <div class="empty-state-subtext">Отдыхай</div>
             </div>
         `;
@@ -218,7 +220,9 @@ function renderSchedule(dayKey) {
     
     list.innerHTML = lessons.map((lesson, i) => {
         const noteKey = `${dayKey}_${i}`;
-        const hasNote = notes[noteKey]?.trim();
+        const noteData = notes[noteKey];
+        const hasNote = noteData?.text?.trim();
+        const likesCount = noteData?.likes?.length || 0;
         
         let cardClass = 'lesson-card';
         if (hasNote) cardClass += ' has-note';
@@ -235,15 +239,20 @@ function renderSchedule(dayKey) {
             }
         }
         
+        const noteIndicator = hasNote ? `
+            <div class="note-preview">
+                <span class="note-indicator">📝</span>
+                ${likesCount > 0 ? `<span class="likes-count">❤️ ${likesCount}</span>` : ''}
+            </div>
+        ` : '';
+        
         return `
             <div class="${cardClass}" data-day="${dayKey}" data-index="${i}">
                 <div class="lesson-number">${i + 1}</div>
                 <div class="lesson-info">
-                    <div class="lesson-subject">
-                        ${lesson.subject}
-                        ${hasNote ? '<span class="note-indicator"></span>' : ''}
-                    </div>
+                    <div class="lesson-subject">${lesson.subject}</div>
                     <div class="lesson-time">${lesson.time}</div>
+                    ${noteIndicator}
                 </div>
                 <div class="lesson-room">${lesson.room}</div>
             </div>
@@ -253,7 +262,6 @@ function renderSchedule(dayKey) {
     document.getElementById('totalLessons').textContent = lessons.length;
     document.getElementById('endTime').textContent = lessons[lessons.length - 1].time.split('–')[1];
     
-    // Клики на карточки
     list.querySelectorAll('.lesson-card').forEach(card => {
         card.addEventListener('click', () => openNoteModal(card.dataset.day, parseInt(card.dataset.index)));
     });
@@ -262,10 +270,33 @@ function renderSchedule(dayKey) {
 function openNoteModal(dayKey, index) {
     const lesson = SCHEDULE[dayKey][index];
     currentNoteKey = `${dayKey}_${index}`;
+    const noteData = notes[currentNoteKey] || {};
     
     document.getElementById('modalSubject').textContent = lesson.subject;
     document.getElementById('modalDetails').textContent = `${DAYS_FULL[dayKey]} · ${lesson.time} · каб. ${lesson.room}`;
-    document.getElementById('noteText').value = notes[currentNoteKey] || '';
+    document.getElementById('noteText').value = noteData.text || '';
+    
+    // Показываем автора если есть заметка
+    const authorEl = document.getElementById('noteAuthor');
+    if (noteData.text && noteData.author) {
+        authorEl.textContent = `✏️ ${noteData.author}`;
+        authorEl.style.display = 'block';
+    } else {
+        authorEl.style.display = 'none';
+    }
+    
+    // Лайки
+    const likesCount = noteData.likes?.length || 0;
+    const isLiked = noteData.likes?.includes(userId);
+    const likeBtn = document.getElementById('likeBtn');
+    likeBtn.innerHTML = `${isLiked ? '❤️' : '🤍'} ${likesCount || ''}`;
+    likeBtn.classList.toggle('liked', isLiked);
+    likeBtn.style.display = noteData.text ? 'flex' : 'none';
+    
+    // Показываем кнопку удаления только автору
+    const deleteBtn = document.getElementById('deleteNote');
+    const canDelete = !noteData.author_id || noteData.author_id === userId;
+    deleteBtn.style.display = canDelete && noteData.text ? 'block' : 'none';
     
     document.getElementById('noteModal').classList.add('active');
 }
@@ -279,21 +310,30 @@ async function saveNote() {
     const text = document.getElementById('noteText').value.trim();
     
     if (text) {
-        notes[currentNoteKey] = text;
+        const existing = notes[currentNoteKey] || {};
+        notes[currentNoteKey] = {
+            text,
+            author: userName,
+            author_id: userId,
+            likes: existing.likes || []
+        };
     } else {
         delete notes[currentNoteKey];
     }
     
-    // Сохраняем локально
     localStorage.setItem('schedule_notes', JSON.stringify(notes));
     
-    // Отправляем на сервер если есть API
     if (!USE_LOCAL) {
         try {
             await fetch(`${API_URL}/api/notes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: currentNoteKey, text })
+                body: JSON.stringify({ 
+                    key: currentNoteKey, 
+                    text,
+                    author: userName,
+                    author_id: userId
+                })
             });
         } catch (e) {
             console.log('API недоступен');
@@ -301,6 +341,42 @@ async function saveNote() {
     }
     
     closeNoteModal();
+    renderSchedule(currentDay);
+}
+
+async function toggleLike() {
+    if (!notes[currentNoteKey]?.text) return;
+    
+    const noteData = notes[currentNoteKey];
+    if (!noteData.likes) noteData.likes = [];
+    
+    const idx = noteData.likes.indexOf(userId);
+    if (idx > -1) {
+        noteData.likes.splice(idx, 1);
+    } else {
+        noteData.likes.push(userId);
+    }
+    
+    localStorage.setItem('schedule_notes', JSON.stringify(notes));
+    
+    if (!USE_LOCAL) {
+        try {
+            await fetch(`${API_URL}/api/like`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: currentNoteKey, user_id: userId })
+            });
+        } catch (e) {
+            console.log('API недоступен');
+        }
+    }
+    
+    // Обновляем UI
+    const isLiked = noteData.likes.includes(userId);
+    const likeBtn = document.getElementById('likeBtn');
+    likeBtn.innerHTML = `${isLiked ? '❤️' : '🤍'} ${noteData.likes.length || ''}`;
+    likeBtn.classList.toggle('liked', isLiked);
+    
     renderSchedule(currentDay);
 }
 
@@ -423,6 +499,7 @@ function initModal() {
     document.getElementById('closeModal').addEventListener('click', closeNoteModal);
     document.getElementById('saveNote').addEventListener('click', saveNote);
     document.getElementById('deleteNote').addEventListener('click', deleteNote);
+    document.getElementById('likeBtn').addEventListener('click', toggleLike);
     
     document.getElementById('noteModal').addEventListener('click', (e) => {
         if (e.target.id === 'noteModal') closeNoteModal();
