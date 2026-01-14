@@ -97,8 +97,25 @@ function initTelegram() {
         }
         
         // Устанавливаем цвет хедера
-        tg.setHeaderColor('#6c5ce7');
-        tg.setBackgroundColor(tg.colorScheme === 'light' ? '#f5f5f7' : '#0f0f0f');
+        tg.setHeaderColor('#8b5cf6');
+        tg.setBackgroundColor(tg.colorScheme === 'light' ? '#f0f2f5' : '#0a0a0f');
+        
+        // Получаем данные пользователя и аватарку
+        if (tg.initDataUnsafe?.user) {
+            const user = tg.initDataUnsafe.user;
+            const avatar = document.getElementById('userAvatar');
+            
+            // Если есть фото профиля
+            if (user.photo_url) {
+                avatar.src = user.photo_url;
+            } else {
+                // Генерируем аватарку с инициалами
+                const initials = (user.first_name?.[0] || '') + (user.last_name?.[0] || '');
+                const colors = ['#8b5cf6', '#6366f1', '#ec4899', '#10b981', '#f59e0b'];
+                const color = colors[user.id % colors.length];
+                avatar.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='${encodeURIComponent(color)}'/%3E%3Ctext x='50' y='62' text-anchor='middle' fill='white' font-size='36' font-weight='600' font-family='Inter,sans-serif'%3E${initials}%3C/text%3E%3C/svg%3E`;
+            }
+        }
     }
 }
 

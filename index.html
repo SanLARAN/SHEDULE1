@@ -14,7 +14,10 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>📚 Расписание</h1>
+                <div class="header-left">
+                    <img class="user-avatar" id="userAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%238b5cf6'/%3E%3Ctext x='50' y='65' text-anchor='middle' fill='white' font-size='40' font-family='sans-serif'%3E📚%3C/text%3E%3C/svg%3E" alt="Avatar">
+                    <h1>Расписание</h1>
+                </div>
                 <div class="current-time" id="currentTime"></div>
             </div>
         </header>
@@ -42,12 +45,12 @@
 
         <!-- Day Tabs -->
         <nav class="day-tabs">
-            <button class="day-tab" data-day="ПН">Пн</button>
-            <button class="day-tab" data-day="ВТ">Вт</button>
-            <button class="day-tab" data-day="СР">Ср</button>
-            <button class="day-tab" data-day="ЧТ">Чт</button>
-            <button class="day-tab" data-day="ПТ">Пт</button>
-            <button class="day-tab" data-day="СБ">Сб</button>
+            <button class="day-tab" data-day="ПН"><span>Пн</span></button>
+            <button class="day-tab" data-day="ВТ"><span>Вт</span></button>
+            <button class="day-tab" data-day="СР"><span>Ср</span></button>
+            <button class="day-tab" data-day="ЧТ"><span>Чт</span></button>
+            <button class="day-tab" data-day="ПТ"><span>Пт</span></button>
+            <button class="day-tab" data-day="СБ"><span>Сб</span></button>
         </nav>
 
         <!-- Schedule List -->
