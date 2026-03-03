@@ -9,16 +9,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
   background: #050816;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
