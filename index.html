@@ -1,14 +1,994 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#050816" />
-    <title>Расписание</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Расписание</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{
+  height:100%;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-text-size-adjust:100%;
+  background:var(--bg);color:var(--text);
+}
+:root{
+  --bg:var(--tg-theme-secondary-bg-color,#f2f2f7);
+  --card:var(--tg-theme-bg-color,#ffffff);
+  --text:var(--tg-theme-text-color,#000000);
+  --hint:var(--tg-theme-hint-color,#8e8e93);
+  --accent:var(--tg-theme-button-color,#007aff);
+  --accent-text:var(--tg-theme-button-text-color,#ffffff);
+  --link:var(--tg-theme-link-color,#007aff);
+  --spring:cubic-bezier(.32,.72,0,1);
+  --bounce:cubic-bezier(.34,1.56,.64,1);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:var(--tg-theme-secondary-bg-color,#000000);
+    --card:var(--tg-theme-bg-color,#1c1c1e);
+    --text:var(--tg-theme-text-color,#ffffff);
+    --hint:var(--tg-theme-hint-color,#8e8e93);
+    --accent:var(--tg-theme-button-color,#0a84ff);
+  }
+}
+
+/* ======= SCREENS ======= */
+.screen{
+  position:fixed;inset:0;
+  opacity:0;transform:translateY(40px);
+  pointer-events:none;
+  transition:opacity .5s var(--spring),transform .5s var(--spring);
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  z-index:1;
+}
+.screen.active{opacity:1;transform:translateY(0);pointer-events:auto;z-index:2}
+.screen.exit{opacity:0;transform:scale(.94);z-index:1}
+
+/* ======= WELCOME ======= */
+.welcome{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100%;padding:60px 24px calc(40px + var(--safe-bottom));
+  background:var(--card);
+  position:relative;overflow:hidden;
+}
+.welcome::before{
+  content:'';position:absolute;width:300%;height:300%;top:-100%;left:-100%;
+  background:radial-gradient(circle at 30% 40%,rgba(0,122,255,.06) 0%,transparent 50%),
+             radial-gradient(circle at 75% 70%,rgba(88,86,214,.05) 0%,transparent 50%),
+             radial-gradient(circle at 50% 20%,rgba(255,45,85,.04) 0%,transparent 40%);
+  animation:bgDrift 25s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes bgDrift{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  33%{transform:translate(40px,-30px) rotate(120deg)}
+  66%{transform:translate(-30px,30px) rotate(240deg)}
+}
+.welcome-emoji{
+  font-size:88px;margin-bottom:12px;position:relative;
+  animation:floatEmoji 3s ease-in-out infinite;
+}
+@keyframes floatEmoji{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-12px) scale(1.05)}
+}
+.welcome-particles{position:absolute;width:100%;height:100%;top:0;left:0;pointer-events:none;overflow:hidden}
+.particle{
+  position:absolute;border-radius:50%;
+  animation:particleFloat linear infinite;
+  opacity:.25;
+}
+@keyframes particleFloat{
+  0%{transform:translateY(100vh) scale(0);opacity:0}
+  10%{opacity:.3}
+  90%{opacity:.3}
+  100%{transform:translateY(-20vh) scale(1);opacity:0}
+}
+.welcome-title{
+  font-size:34px;font-weight:700;text-align:center;
+  letter-spacing:-.5px;line-height:1.15;
+  opacity:0;animation:fadeUp .7s .25s var(--spring) forwards;
+  position:relative;
+}
+.welcome-subtitle{
+  font-size:17px;color:var(--hint);text-align:center;
+  line-height:1.5;margin:10px 0 32px;max-width:300px;
+  opacity:0;animation:fadeUp .7s .4s var(--spring) forwards;
+  position:relative;
+}
+.welcome-features{
+  display:flex;flex-direction:column;gap:10px;
+  width:100%;max-width:320px;margin-bottom:36px;
+  position:relative;
+}
+.welcome-feat{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 18px;background:var(--bg);border-radius:16px;
+  opacity:0;animation:fadeUp .6s var(--spring) forwards;
+}
+.welcome-feat:nth-child(1){animation-delay:.5s}
+.welcome-feat:nth-child(2){animation-delay:.6s}
+.welcome-feat:nth-child(3){animation-delay:.7s}
+.welcome-feat-icon{font-size:26px;flex-shrink:0}
+.welcome-feat-txt{font-size:15px;font-weight:500}
+
+.btn-primary{
+  width:100%;max-width:320px;padding:17px;border:none;border-radius:14px;
+  background:var(--accent);color:var(--accent-text);
+  font-size:17px;font-weight:600;font-family:inherit;cursor:pointer;
+  transition:transform .25s var(--spring),opacity .2s;
+  position:relative;
+  opacity:0;animation:fadeUp .6s .85s var(--spring) forwards;
+}
+.btn-primary:active{transform:scale(.96);opacity:.85}
+
+/* ======= SETUP ======= */
+.setup{
+  min-height:100%;
+  padding:60px 16px calc(100px + var(--safe-bottom)) 16px;
+  background:var(--bg);
+}
+.setup-title{
+  font-size:30px;font-weight:700;text-align:center;
+  margin-bottom:8px;letter-spacing:-.4px;
+}
+.setup-sub{
+  font-size:15px;color:var(--hint);text-align:center;
+  line-height:1.5;margin-bottom:28px;max-width:340px;margin-left:auto;margin-right:auto;
+}
+.choice-card{
+  background:var(--card);border-radius:18px;padding:18px;
+  margin-bottom:12px;
+  opacity:0;animation:fadeUp .5s var(--spring) forwards;
+}
+.choice-label{
+  font-size:13px;font-weight:600;color:var(--hint);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;
+}
+.choice-options{display:flex;flex-wrap:wrap;gap:8px}
+.choice-opt{
+  padding:10px 18px;border-radius:12px;border:2px solid transparent;
+  background:var(--bg);font-size:15px;font-weight:500;font-family:inherit;
+  cursor:pointer;transition:all .3s var(--spring);color:var(--text);
+  position:relative;overflow:hidden;
+}
+.choice-opt.selected{
+  background:var(--accent);color:var(--accent-text);
+  border-color:var(--accent);
+  transform:scale(1.03);
+}
+.choice-opt:active{transform:scale(.95)}
+.setup-btn-wrap{
+  position:fixed;bottom:0;left:0;right:0;
+  padding:12px 16px calc(12px + var(--safe-bottom));
+  background:linear-gradient(transparent,var(--bg) 30%);
+  z-index:10;
+}
+.setup-btn-wrap .btn-primary{
+  opacity:1;animation:none;max-width:100%;
+  transition:transform .25s var(--spring),opacity .3s,background .3s;
+}
+.setup-btn-wrap .btn-primary:disabled{opacity:.4;transform:none}
+
+/* ======= MAIN ======= */
+.main{min-height:100%;background:var(--bg);padding-bottom:calc(20px + var(--safe-bottom))}
+.main-header{
+  position:sticky;top:0;z-index:10;
+  padding:16px 20px 0;
+  background:var(--bg);
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+}
+.header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.header-greeting{font-size:15px;color:var(--hint);font-weight:500}
+.header-settings{
+  width:36px;height:36px;border-radius:50%;border:none;
+  background:var(--card);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .3s var(--spring);
+}
+.header-settings:active{transform:scale(.88) rotate(-30deg)}
+.header-title{font-size:34px;font-weight:700;letter-spacing:-.5px;margin-bottom:14px}
+
+/* Day tabs */
+.day-tabs{
+  display:flex;gap:6px;
+  padding:0 20px 14px;overflow-x:auto;
+  -ms-overflow-style:none;scrollbar-width:none;
+  position:sticky;top:82px;z-index:10;
+  background:var(--bg);
+}
+.day-tabs::-webkit-scrollbar{display:none}
+.day-tab{
+  flex-shrink:0;padding:8px 18px;border-radius:20px;border:none;
+  font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;
+  background:var(--card);color:var(--hint);
+  transition:all .35s var(--spring);
+  position:relative;
+}
+.day-tab.active{background:var(--accent);color:var(--accent-text);transform:scale(1.05)}
+.day-tab.today::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;
+  background:var(--accent);
+}
+.day-tab.active.today::after{background:var(--accent-text)}
+.day-tab:active{transform:scale(.93)}
+
+/* Status card */
+.status-card{
+  margin:0 16px 12px;padding:16px 18px;border-radius:16px;
+  background:var(--card);display:flex;align-items:center;gap:14px;
+  animation:fadeUp .5s var(--spring) forwards;
+}
+.status-icon{font-size:32px;flex-shrink:0}
+.status-text{flex:1}
+.status-label{font-size:13px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.3px}
+.status-value{font-size:16px;font-weight:600;margin-top:2px}
+.status-progress{
+  width:100%;height:4px;border-radius:2px;background:var(--bg);
+  margin-top:8px;overflow:hidden;
+}
+.status-progress-bar{
+  height:100%;border-radius:2px;background:var(--accent);
+  transition:width 1s linear;
+}
+
+/* Lessons container */
+.lessons{padding:0 16px}
+.lesson-card{
+  display:flex;background:var(--card);border-radius:16px;
+  margin-bottom:8px;overflow:hidden;
+  opacity:0;transform:translateY(20px) scale(.97);
+  animation:cardIn .5s var(--spring) forwards;
+  transition:transform .3s var(--spring);
+  position:relative;
+}
+.lesson-card:active{transform:scale(.98)!important}
+.lesson-card.past{opacity:.45}
+.lesson-card.past .lesson-accent{opacity:.4}
+.lesson-card.current{box-shadow:0 0 0 2px var(--lesson-accent,var(--accent)),0 8px 25px -8px rgba(0,0,0,.12)}
+.lesson-card.current .lesson-accent{animation:accentPulse 2s ease-in-out infinite}
+@keyframes accentPulse{
+  0%,100%{opacity:1}50%{opacity:.4}
+}
+.lesson-accent{width:5px;flex-shrink:0;background:var(--lesson-accent,var(--accent));border-radius:0 3px 3px 0}
+.lesson-body{flex:1;padding:14px 16px}
+.lesson-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.lesson-num{
+  font-size:12px;font-weight:700;color:var(--accent-text);
+  background:var(--lesson-accent,var(--accent));
+  padding:2px 7px;border-radius:6px;
+}
+.lesson-time{font-size:13px;color:var(--hint);font-weight:500}
+.lesson-subject{display:flex;align-items:center;gap:8px}
+.lesson-icon{font-size:20px}
+.lesson-name{font-size:16px;font-weight:600}
+.lesson-room{font-size:13px;color:var(--hint);margin-top:2px;padding-left:28px}
+.lesson-progress-wrap{margin-top:8px}
+.lesson-progress-bar-bg{width:100%;height:4px;border-radius:2px;background:var(--bg);overflow:hidden}
+.lesson-progress-fill{height:100%;border-radius:2px;background:var(--lesson-accent,var(--accent));transition:width 1s linear}
+.lesson-remaining{font-size:12px;color:var(--lesson-accent,var(--accent));font-weight:600;margin-top:4px}
+
+/* Empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 24px;text-align:center;
+  animation:fadeUp .6s var(--spring);
+}
+.empty-emoji{font-size:72px;margin-bottom:16px;animation:floatEmoji 3s ease-in-out infinite}
+.empty-title{font-size:22px;font-weight:700;margin-bottom:8px}
+.empty-sub{font-size:15px;color:var(--hint);line-height:1.5;max-width:280px}
+
+/* ======= ANIMATIONS ======= */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(20px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes scaleIn{
+  from{opacity:0;transform:scale(.85)}
+  to{opacity:1;transform:scale(1)}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+
+/* Skeleton */
+.skeleton{
+  background:linear-gradient(90deg,var(--bg) 25%,var(--card) 50%,var(--bg) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+  border-radius:8px;
+}
+@keyframes shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
+/* Toast */
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);
+  padding:12px 24px;border-radius:14px;
+  background:var(--card);color:var(--text);
+  font-size:15px;font-weight:600;
+  box-shadow:0 8px 30px rgba(0,0,0,.15);
+  z-index:100;
+  transition:transform .5s var(--bounce);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ===== WELCOME ===== -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome">
+    <div class="welcome-particles" id="particles"></div>
+    <div class="welcome-emoji" id="welcome-emoji">📚</div>
+    <h1 class="welcome-title">Привет, <span id="user-name">друг</span>!</h1>
+    <p class="welcome-subtitle">Твоё расписание уроков всегда под рукой — быстро, красиво и удобно</p>
+    <div class="welcome-features">
+      <div class="welcome-feat">
+        <span class="welcome-feat-icon">📅</span>
+        <span class="welcome-feat-txt">Расписание на каждый день</span>
+      </div>
+      <div class="welcome-feat">
+        <span class="welcome-feat-icon">⏱</span>
+        <span class="welcome-feat-txt">Таймер до конца урока</span>
+      </div>
+      <div class="welcome-feat">
+        <span class="welcome-feat-icon">🎯</span>
+        <span class="welcome-feat-txt">Только твои предметы</span>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-start">Начать</button>
+  </div>
+</div>
+
+<!-- ===== SETUP ===== -->
+<div id="screen-setup" class="screen">
+  <div class="setup">
+    <h2 class="setup-title">Твои предметы</h2>
+    <p class="setup-sub">Некоторые уроки идут параллельно. Выбери те, на которые ты ходишь</p>
+    <div id="choices-container"></div>
+  </div>
+  <div class="setup-btn-wrap">
+    <button class="btn-primary" id="btn-done" disabled>Готово</button>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div id="screen-main" class="screen">
+  <div class="main">
+    <div class="main-header">
+      <div class="header-row">
+        <span class="header-greeting" id="header-greeting">Сегодня</span>
+        <button class="header-settings" id="btn-settings" title="Настройки">⚙️</button>
+      </div>
+      <div class="header-title" id="header-title">Расписание</div>
+    </div>
+    <div class="day-tabs" id="day-tabs"></div>
+    <div id="status-area"></div>
+    <div class="lessons" id="lessons-container"></div>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const SCHEDULE = {
+  "ПН":[
+    {time:"08:00–08:40",subject:"Кл. час",room:""},
+    {time:"08:45–09:20",subject:"Русский язык",room:""},
+    {time:"09:30–10:05",subject:"Русский язык",room:""},
+    {time:"10:15–10:50",subject:"Физ-ра",room:"Зал"},
+    {time:"11:00–11:35",subject:"Обществознание",room:""},
+    {time:"11:45–12:20",subject:"Обед",room:"Столовая"},
+    {time:"12:25–13:00",subject:"Обществознание",room:""}
+  ],
+  "ВТ":[
+    {time:"08:00–08:40",subject:"Математика (профиль)",room:""},
+    {time:"08:45–09:25",subject:"Математика (профиль)",room:""},
+    {time:"09:35–10:15",subject:"Физ-ра",room:"Зал"},
+    {time:"10:25–11:05",subject:"Обед",room:"Столовая"},
+    {time:"11:15–11:55",subject:"Русский язык",room:""},
+    {time:"12:00–12:40",subject:"Русский язык",room:""},
+    {time:"12:45–13:25",subject:"Англ. язык",room:""},
+    {time:"13:35–14:15",subject:"Англ. язык",room:""}
+  ],
+  "СР":[
+    {time:"08:00–08:40",subject:"Русский язык",room:""},
+    {time:"08:45–09:25",subject:"Русский язык",room:""},
+    {time:"09:35–10:15",subject:"История",room:""},
+    {time:"10:25–11:05",subject:"История / Математика (П)",room:""},
+    {time:"11:15–11:55",subject:"Математика (профиль)",room:""}
+  ],
+  "ЧТ":[
+    {time:"08:00–08:40",subject:"Хореография",room:""},
+    {time:"08:45–09:20",subject:"Хореография / Информатика",room:""},
+    {time:"09:30–10:05",subject:"Информатика",room:""},
+    {time:"10:15–10:50",subject:"Рус. яз / Физика / Инф",room:""},
+    {time:"11:00–11:35",subject:"Физика",room:""},
+    {time:"11:45–12:20",subject:"Математика (база)",room:""},
+    {time:"12:25–13:00",subject:"Англ. язык",room:""}
+  ],
+  "ПТ":[
+    {time:"08:00–08:40",subject:"Информатика",room:""},
+    {time:"08:45–09:25",subject:"Информатика / История",room:""},
+    {time:"09:35–10:15",subject:"Информатика / История",room:""},
+    {time:"10:25–11:05",subject:"—",room:""},
+    {time:"11:15–11:55",subject:"—",room:""},
+    {time:"12:00–12:40",subject:"Англ. язык",room:""},
+    {time:"12:45–13:25",subject:"Англ. язык",room:""}
+  ],
+  "СБ":[
+    {time:"08:00–08:40",subject:"История",room:""},
+    {time:"08:45–09:25",subject:"История",room:""},
+    {time:"09:35–10:15",subject:"История",room:""},
+    {time:"10:25–11:05",subject:"Математика (Б) / Физика",room:""},
+    {time:"11:15–11:55",subject:"Физика / Обществознание",room:""},
+    {time:"12:00–12:40",subject:"Обществознание",room:""}
+  ],
+  "ВС":[]
+};
+
+const DAY_NAMES = ["ВС","ПН","ВТ","СР","ЧТ","ПТ","СБ"];
+const DAY_FULL = {
+  "ПН":"Понедельник","ВТ":"Вторник","СР":"Среда",
+  "ЧТ":"Четверг","ПТ":"Пятница","СБ":"Суббота","ВС":"Воскресенье"
+};
+const DAY_ORDER = ["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];
+
+const ICONS = {
+  "Кл. час":"🏫","Русский язык":"✏️","Рус. яз":"✏️",
+  "Физ-ра":"⚽","Обществознание":"📖",
+  "Математика (профиль)":"📐","Математика (П)":"📐",
+  "Математика (база)":"🔢","Математика (Б)":"🔢",
+  "Англ. язык":"🇬🇧","История":"🏛","Информатика":"💻","Инф":"💻",
+  "Физика":"⚡","Хореография":"💃","Обед":"🍽","—":"✨"
+};
+
+const COLORS = {
+  "Кл. час":"#34C759","Русский язык":"#FF9500","Рус. яз":"#FF9500",
+  "Физ-ра":"#007AFF","Обществознание":"#AF52DE",
+  "Математика (профиль)":"#5856D6","Математика (П)":"#5856D6",
+  "Математика (база)":"#5856D6","Математика (Б)":"#5856D6",
+  "Англ. язык":"#30B0C7","История":"#FF3B30","Информатика":"#32ADE6","Инф":"#32ADE6",
+  "Физика":"#FFCC00","Хореография":"#FF2D55","Обед":"#34C759","—":"#8E8E93"
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentScreen = 'welcome';
+let selectedDay = getTodayKey();
+let userChoices = {};
+let updateTimer = null;
+
+/* ============================================================
+   TELEGRAM INTEGRATION
+   ============================================================ */
+const tg = window.Telegram?.WebApp;
+let userName = 'друг';
+
+function initTelegram() {
+  if (!tg) return;
+  tg.ready();
+  tg.expand();
+  try { tg.setHeaderColor('secondary_bg_color'); } catch(e) {}
+  try { tg.setBackgroundColor('secondary_bg_color'); } catch(e) {}
+
+  if (tg.initDataUnsafe?.user) {
+    const u = tg.initDataUnsafe.user;
+    userName = u.first_name || u.username || 'друг';
+  }
+
+  tg.BackButton.onClick(() => {
+    if (currentScreen === 'setup') navigateTo('welcome');
+    else if (currentScreen === 'main') tg.close();
+  });
+
+  tg.onEvent('themeChanged', () => {
+    // Theme vars auto-update, just re-render
+    if (currentScreen === 'main') renderSchedule(selectedDay);
+  });
+}
+
+function haptic(type, style) {
+  try {
+    if (!tg?.HapticFeedback) return;
+    if (type === 'impact') tg.HapticFeedback.impactOccurred(style || 'light');
+    else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+    else if (type === 'selection') tg.HapticFeedback.selectionChanged();
+  } catch(e) {}
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function navigateTo(screen, skipAnim) {
+  const from = document.getElementById('screen-' + currentScreen);
+  const to = document.getElementById('screen-' + screen);
+
+  if (skipAnim) {
+    from.classList.remove('active','exit');
+    to.classList.add('active');
+    to.classList.remove('exit');
+    currentScreen = screen;
+    updateBackButton();
+    if (screen === 'main') onMainEnter();
+    return;
+  }
+
+  from.style.transition = 'all .4s cubic-bezier(.32,.72,0,1)';
+  from.classList.add('exit');
+  from.classList.remove('active');
+
+  setTimeout(() => {
+    to.style.transform = 'translateY(40px)';
+    to.style.opacity = '0';
+    to.classList.add('active');
+    to.classList.remove('exit');
+    void to.offsetHeight;
+    to.style.transition = 'all .5s cubic-bezier(.32,.72,0,1)';
+    to.style.opacity = '1';
+    to.style.transform = 'translateY(0)';
+
+    setTimeout(() => {
+      from.classList.remove('exit');
+      from.style.transition = '';
+      from.style.opacity = '';
+      from.style.transform = '';
+      to.style.transition = '';
+      to.style.opacity = '';
+      to.style.transform = '';
+    }, 550);
+
+    currentScreen = screen;
+    updateBackButton();
+    if (screen === 'main') onMainEnter();
+    if (screen === 'setup') onSetupEnter();
+  }, 350);
+}
+
+function updateBackButton() {
+  if (!tg) return;
+  if (currentScreen === 'welcome') tg.BackButton.hide();
+  else tg.BackButton.show();
+}
+
+/* ============================================================
+   CHOICES (subject selection)
+   ============================================================ */
+function collectChoices() {
+  const choices = [];
+  const seen = new Set();
+  for (const day of DAY_ORDER) {
+    for (const lesson of (SCHEDULE[day] || [])) {
+      if (lesson.subject.includes(' / ') && !seen.has(lesson.subject)) {
+        seen.add(lesson.subject);
+        choices.push({
+          key: lesson.subject,
+          day,
+          time: lesson.time,
+          options: lesson.subject.split(' / ').map(s => s.trim())
+        });
+      }
+    }
+  }
+  return choices;
+}
+
+function renderSetupChoices() {
+  const container = document.getElementById('choices-container');
+  const choices = collectChoices();
+  container.innerHTML = '';
+
+  choices.forEach((c, ci) => {
+    const card = document.createElement('div');
+    card.className = 'choice-card';
+    card.style.animationDelay = (ci * .08 + .1) + 's';
+
+    const label = document.createElement('div');
+    label.className = 'choice-label';
+    label.textContent = DAY_FULL[c.day] + ' • ' + c.time;
+    card.appendChild(label);
+
+    const opts = document.createElement('div');
+    opts.className = 'choice-options';
+
+    c.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-opt';
+      btn.textContent = (ICONS[opt] || '📘') + ' ' + opt;
+      if (userChoices[c.key] === opt) btn.classList.add('selected');
+
+      btn.addEventListener('click', () => {
+        haptic('selection');
+        userChoices[c.key] = opt;
+        opts.querySelectorAll('.choice-opt').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        checkSetupComplete();
+      });
+
+      opts.appendChild(btn);
+    });
+
+    card.appendChild(opts);
+    container.appendChild(card);
+  });
+}
+
+function checkSetupComplete() {
+  const choices = collectChoices();
+  const allSelected = choices.every(c => userChoices[c.key]);
+  document.getElementById('btn-done').disabled = !allSelected;
+}
+
+function onSetupEnter() {
+  renderSetupChoices();
+  checkSetupComplete();
+}
+
+/* ============================================================
+   SCHEDULE RENDERING
+   ============================================================ */
+function resolveSubject(subjectStr) {
+  if (subjectStr.includes(' / ') && userChoices[subjectStr]) {
+    return userChoices[subjectStr];
+  }
+  return subjectStr;
+}
+
+function getSubjectIcon(name) { return ICONS[name] || '📘'; }
+function getSubjectColor(name) { return COLORS[name] || '#8E8E93'; }
+
+function parseTime(timeStr) {
+  const [s, e] = timeStr.split('–');
+  const [sh, sm] = s.split(':').map(Number);
+  const [eh, em] = e.split(':').map(Number);
+  return { startMin: sh * 60 + sm, endMin: eh * 60 + em };
+}
+
+function getNowMinutes() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function getTodayKey() {
+  return DAY_NAMES[new Date().getDay()];
+}
+
+function isToday(dayKey) {
+  return dayKey === getTodayKey();
+}
+
+function getDateString() {
+  const d = new Date();
+  const months = ['января','февраля','марта','апреля','мая','июня',
+                  'июля','августа','сентября','октября','ноября','декабря'];
+  return d.getDate() + ' ' + months[d.getMonth()];
+}
+
+function renderDayTabs() {
+  const container = document.getElementById('day-tabs');
+  container.innerHTML = '';
+  const today = getTodayKey();
+
+  DAY_ORDER.forEach(day => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tab';
+    if (day === selectedDay) btn.classList.add('active');
+    if (day === today) btn.classList.add('today');
+    btn.textContent = day;
+
+    btn.addEventListener('click', () => {
+      if (day === selectedDay) return;
+      haptic('selection');
+      selectedDay = day;
+      container.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderSchedule(day);
+      // Scroll tab into view
+      btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+
+    container.appendChild(btn);
+  });
+
+  // Scroll active tab into view
+  setTimeout(() => {
+    const active = container.querySelector('.day-tab.active');
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, 100);
+}
+
+function renderSchedule(day) {
+  const lessons = SCHEDULE[day] || [];
+  const container = document.getElementById('lessons-container');
+  const statusArea = document.getElementById('status-area');
+  const today = isToday(day);
+  const nowMin = getNowMinutes();
+
+  // Empty state
+  if (lessons.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">${day === 'ВС' ? '😴' : '🎉'}</div>
+        <div class="empty-title">${day === 'ВС' ? 'Воскресенье — отдыхай!' : 'Нет уроков'}</div>
+        <div class="empty-sub">${day === 'ВС' ? 'Завтра снова в школу, набирайся сил!' : 'В этот день уроков нет'}</div>
+      </div>`;
+    statusArea.innerHTML = '';
+    return;
+  }
+
+  // Find current lesson
+  let currentIdx = -1;
+  let currentProgress = 0;
+  let nextIdx = -1;
+
+  if (today) {
+    for (let i = 0; i < lessons.length; i++) {
+      const { startMin, endMin } = parseTime(lessons[i].time);
+      if (nowMin >= startMin && nowMin < endMin) {
+        currentIdx = i;
+        currentProgress = (nowMin - startMin) / (endMin - startMin);
+        break;
+      }
+    }
+    if (currentIdx === -1) {
+      for (let i = 0; i < lessons.length; i++) {
+        const { startMin } = parseTime(lessons[i].time);
+        if (nowMin < startMin) { nextIdx = i; break; }
+      }
+    }
+  }
+
+  // Status card
+  if (today) {
+    const lastLesson = lessons[lessons.length - 1];
+    const lastEnd = parseTime(lastLesson.time).endMin;
+    const firstStart = parseTime(lessons[0].time).startMin;
+
+    if (currentIdx >= 0) {
+      const subj = resolveSubject(lessons[currentIdx].subject);
+      const { endMin, startMin } = parseTime(lessons[currentIdx].time);
+      const remaining = endMin - nowMin;
+      statusArea.innerHTML = `
+        <div class="status-card">
+          <div class="status-icon">${getSubjectIcon(subj)}</div>
+          <div class="status-text">
+            <div class="status-label">Сейчас идёт</div>
+            <div class="status-value">${subj} • Осталось ${remaining} мин</div>
+            <div class="status-progress"><div class="status-progress-bar" style="width:${currentProgress * 100}%"></div></div>
+          </div>
+        </div>`;
+    } else if (nowMin < firstStart) {
+      const mins = firstStart - nowMin;
+      statusArea.innerHTML = `
+        <div class="status-card">
+          <div class="status-icon">🔔</div>
+          <div class="status-text">
+            <div class="status-label">До первого урока</div>
+            <div class="status-value">${mins} мин</div>
+          </div>
+        </div>`;
+    } else if (nowMin >= lastEnd) {
+      statusArea.innerHTML = `
+        <div class="status-card">
+          <div class="status-icon">🎉</div>
+          <div class="status-text">
+            <div class="status-label">Готово!</div>
+            <div class="status-value">Уроки на сегодня закончились</div>
+          </div>
+        </div>`;
+    } else if (nextIdx >= 0) {
+      const { startMin } = parseTime(lessons[nextIdx].time);
+      const mins = startMin - nowMin;
+      const subj = resolveSubject(lessons[nextIdx].subject);
+      statusArea.innerHTML = `
+        <div class="status-card">
+          <div class="status-icon">☕</div>
+          <div class="status-text">
+            <div class="status-label">Перемена</div>
+            <div class="status-value">${subj} через ${mins} мин</div>
+          </div>
+        </div>`;
+    } else {
+      statusArea.innerHTML = '';
+    }
+  } else {
+    const count = lessons.filter(l => l.subject !== '—' && l.subject !== 'Обед').length;
+    statusArea.innerHTML = `
+      <div class="status-card">
+        <div class="status-icon">📋</div>
+        <div class="status-text">
+          <div class="status-label">${DAY_FULL[day]}</div>
+          <div class="status-value">${count} ${pluralLessons(count)}</div>
+        </div>
+      </div>`;
+  }
+
+  // Lesson cards
+  container.innerHTML = '';
+  lessons.forEach((lesson, i) => {
+    const resolved = resolveSubject(lesson.subject);
+    const { startMin, endMin } = parseTime(lesson.time);
+    const color = getSubjectColor(resolved);
+    const icon = getSubjectIcon(resolved);
+
+    const card = document.createElement('div');
+    card.className = 'lesson-card';
+    card.style.setProperty('--lesson-accent', color);
+    card.style.animationDelay = (i * .06 + .05) + 's';
+
+    if (today) {
+      if (i === currentIdx) card.classList.add('current');
+      else if (nowMin >= endMin) card.classList.add('past');
+    }
+
+    let progressHTML = '';
+    let remainingHTML = '';
+    if (i === currentIdx && today) {
+      const remaining = endMin - nowMin;
+      progressHTML = `<div class="lesson-progress-wrap">
+        <div class="lesson-progress-bar-bg"><div class="lesson-progress-fill" style="width:${currentProgress * 100}%"></div></div></div>`;
+      remainingHTML = `<div class="lesson-remaining">Осталось ${remaining} мин</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="lesson-accent"></div>
+      <div class="lesson-body">
+        <div class="lesson-top">
+          <span class="lesson-num" style="background:${color}">${i + 1}</span>
+          <span class="lesson-time">${lesson.time}</span>
+        </div>
+        <div class="lesson-subject">
+          <span class="lesson-icon">${icon}</span>
+          <span class="lesson-name">${resolved}</span>
+        </div>
+        ${lesson.room ? `<div class="lesson-room">📍 ${lesson.room}</div>` : ''}
+        ${progressHTML}
+        ${remainingHTML}
+      </div>`;
+
+    container.appendChild(card);
+  });
+}
+
+function pluralLessons(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'урок';
+  if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'урока';
+  return 'уроков';
+}
+
+function onMainEnter() {
+  const greeting = document.getElementById('header-greeting');
+  const title = document.getElementById('header-title');
+
+  greeting.textContent = getDateString();
+  title.textContent = 'Расписание';
+
+  selectedDay = getTodayKey();
+  renderDayTabs();
+  renderSchedule(selectedDay);
+
+  // Auto-update every 30 seconds
+  clearInterval(updateTimer);
+  updateTimer = setInterval(() => {
+    if (currentScreen === 'main' && isToday(selectedDay)) {
+      renderSchedule(selectedDay);
+    }
+  }, 30000);
+}
+
+/* ============================================================
+   PARTICLES (welcome screen)
+   ============================================================ */
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+  const emojis = ['📚','📝','📐','💻','⚡','🏛','📖','✏️','🔢','⚽'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = emojis[i % emojis.length];
+    p.style.left = Math.random() * 100 + '%';
+    p.style.fontSize = (14 + Math.random() * 14) + 'px';
+    p.style.animationDuration = (6 + Math.random() * 8) + 's';
+    p.style.animationDelay = (Math.random() * 6) + 's';
+    container.appendChild(p);
+  }
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function showToast(text, duration) {
+  const toast = document.getElementById('toast');
+  toast.textContent = text;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration || 2500);
+}
+
+/* ============================================================
+   PERSISTENCE
+   ============================================================ */
+function saveState() {
+  localStorage.setItem('schedule_choices', JSON.stringify(userChoices));
+  localStorage.setItem('schedule_onboarded', '1');
+}
+
+function loadState() {
+  try {
+    const c = localStorage.getItem('schedule_choices');
+    if (c) userChoices = JSON.parse(c);
+    return localStorage.getItem('schedule_onboarded') === '1';
+  } catch(e) { return false; }
+}
+
+/* ============================================================
+   EVENT LISTENERS
+   ============================================================ */
+document.getElementById('btn-start').addEventListener('click', () => {
+  haptic('impact', 'medium');
+  navigateTo('setup');
+});
+
+document.getElementById('btn-done').addEventListener('click', () => {
+  haptic('success');
+  saveState();
+  showToast('✅ Настройки сохранены');
+  navigateTo('main');
+});
+
+document.getElementById('btn-settings').addEventListener('click', () => {
+  haptic('impact', 'light');
+  navigateTo('setup');
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  initTelegram();
+  createParticles();
+
+  // Set username
+  document.getElementById('user-name').textContent = userName;
+
+  const onboarded = loadState();
+
+  if (onboarded) {
+    // Skip onboarding, go to main
+    document.getElementById('screen-welcome').classList.remove('active');
+    navigateTo('main', true);
+  } else {
+    // Show welcome
+    currentScreen = 'welcome';
+    updateBackButton();
+  }
+}
+
+init();
+</script>
+</body>
 </html>
