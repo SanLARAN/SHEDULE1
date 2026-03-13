@@ -16,7 +16,6 @@ body{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,san
 .splash.out{opacity:0;transform:scale(.85);filter:blur(20px);pointer-events:none}.splash.gone{display:none}
 .sp-sky{position:absolute;inset:0;opacity:0;transition:opacity 1.5s ease .1s}.splash.active .sp-sky{opacity:1}
 .sp-morning .sp-sky{background:linear-gradient(to bottom,#0a0e2a 0%,#1a1040 20%,#3d1f5c 40%,#b5465a 60%,#e8834a 78%,#ffc857 92%,#fff5d6 100%)}
-.sp-day .sp-sky{background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.06),transparent 60%)}
 .sp-evening .sp-sky{background:linear-gradient(to bottom,#0b0d2e 0%,#1b1354 25%,#4a1942 45%,#8c2a3e 62%,#d4603a 78%,#f0923a 90%,#f4a940 100%)}
 .sp-night .sp-sky{background:radial-gradient(ellipse at 40% 40%,rgba(30,50,120,.12),transparent 60%),radial-gradient(ellipse at 70% 70%,rgba(60,30,100,.08),transparent 50%)}
 .sp-hz{position:absolute;left:-20%;right:-20%;bottom:0;height:45%;opacity:0;transition:opacity 2s ease .3s}.splash.active .sp-hz{opacity:1}
@@ -25,15 +24,11 @@ body{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,san
 .sp-sun{position:absolute;left:50%;border-radius:50%;opacity:0;will-change:transform}
 .sp-morning .sp-sun{width:90px;height:90px;bottom:0;transform:translateX(-50%) translateY(70%);background:radial-gradient(circle,#fffde8 0%,#ffd54f 40%,rgba(255,152,0,.3) 100%);box-shadow:0 0 60px 30px rgba(255,200,50,.2),0 0 130px 60px rgba(255,150,0,.1)}
 .splash.active.sp-morning .sp-sun{opacity:1;transform:translateX(-50%) translateY(-30%);transition:opacity .8s ease .4s,transform 3s cubic-bezier(.22,1,.36,1) .4s}
-.sp-day .sp-sun{width:70px;height:70px;top:22%;transform:translateX(-50%) scale(.8);background:radial-gradient(circle,#fff 0%,#fff8e1 30%,rgba(255,255,255,.2) 100%);box-shadow:0 0 50px 20px rgba(255,255,255,.15),0 0 120px 50px rgba(255,255,255,.06)}
-.splash.active.sp-day .sp-sun{opacity:1;transform:translateX(-50%) scale(1);transition:opacity 1s ease .3s,transform 2s cubic-bezier(.22,1,.36,1) .3s;animation:dSP 4s ease-in-out 2.5s infinite}
-@keyframes dSP{0%,100%{box-shadow:0 0 50px 20px rgba(255,255,255,.15),0 0 120px 50px rgba(255,255,255,.06)}50%{box-shadow:0 0 70px 30px rgba(255,255,255,.2),0 0 150px 60px rgba(255,255,255,.08)}}
 .sp-evening .sp-sun{width:80px;height:80px;bottom:0;transform:translateX(-50%) translateY(40%);background:radial-gradient(circle,#ffe0b2 0%,#ff9800 40%,rgba(255,87,34,.3) 100%);box-shadow:0 0 50px 25px rgba(255,140,40,.2)}
 .splash.active.sp-evening .sp-sun{opacity:1;transform:translateX(-50%) translateY(25%);transition:opacity 1s ease .3s,transform 3s cubic-bezier(.22,1,.36,1) .3s}
 .sp-rays{position:absolute;left:50%;width:0;height:0;opacity:0;transition:opacity 1.5s ease .8s}.splash.active .sp-rays{opacity:1}
 .sp-ray{position:absolute;bottom:0;left:-.75px;width:1.5px;transform-origin:bottom center}
 .sp-morning .sp-rays{bottom:32%}.sp-morning .sp-ray{height:280px;background:linear-gradient(to top,rgba(255,200,60,.08),transparent 70%)}
-.sp-day .sp-rays{top:22%;transform:translateX(-50%)}.sp-day .sp-ray{height:250px;background:linear-gradient(to top,rgba(255,255,255,.04),transparent 65%)}
 .sp-evening .sp-rays{bottom:18%}.sp-evening .sp-ray{height:220px;background:linear-gradient(to top,rgba(255,150,50,.06),transparent 65%)}
 .splash.active .sp-rays{animation:rR 50s linear 1s infinite}@keyframes rR{to{transform:rotate(360deg)}}
 .sp-stars{position:absolute;inset:0;overflow:hidden}.sp-star{position:absolute;border-radius:50%;background:#fff;opacity:0}
@@ -53,6 +48,108 @@ body{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,san
 .sp-sync{position:absolute;bottom:calc(70px + var(--safe-b));left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.25);opacity:0;transition:opacity .5s ease 1.8s;letter-spacing:.3px}
 .splash.active .sp-sync{opacity:1}
 .sp-tap{position:absolute;bottom:calc(40px + var(--safe-b));left:0;right:0;text-align:center;font-size:13px;color:rgba(255,255,255,.2);letter-spacing:.3px;opacity:0;transition:opacity .6s ease 2.4s}.splash.active .sp-tap{opacity:1}
+
+/* ========================================
+   DAY SPLASH — Cinematic Sunburst
+   ======================================== */
+.sp-day .sp-sky{
+  background:linear-gradient(to bottom,
+    #0d1b2a 0%,#1b3a5c 20%,#2a5f8f 45%,
+    #4a8ec4 65%,#6cb4dc 82%,#8ccae8 100%);
+}
+.sp-day .sp-hz{
+  background:radial-gradient(ellipse at 50% 100%,
+    rgba(255,240,200,.1) 0%,rgba(200,220,240,.04) 40%,transparent 70%);
+}
+.sp-day .sp-sun{
+  width:80px;height:80px;top:18%;
+  transform:translateX(-50%) scale(.4);
+  background:radial-gradient(circle,
+    #fff 0%,#fff8e1 20%,rgba(255,220,130,.5) 45%,
+    rgba(255,180,60,.15) 70%,transparent 100%);
+  box-shadow:
+    0 0 40px 15px rgba(255,240,200,.25),
+    0 0 80px 40px rgba(255,220,150,.12),
+    0 0 140px 70px rgba(255,200,100,.06);
+}
+.splash.active.sp-day .sp-sun{
+  opacity:1;transform:translateX(-50%) scale(1);
+  transition:opacity .8s ease .4s,transform 1.5s cubic-bezier(.22,1,.36,1) .4s;
+}
+.sp-day .sp-sun::before{
+  content:'';position:absolute;inset:-30px;border-radius:50%;
+  border:1px solid rgba(255,240,200,.1);opacity:0;
+}
+.splash.active.sp-day .sp-sun::before{animation:dayRing 3.5s ease-out .8s infinite}
+.sp-day .sp-sun::after{
+  content:'';position:absolute;inset:-60px;border-radius:50%;
+  border:1px solid rgba(255,240,200,.05);opacity:0;
+}
+.splash.active.sp-day .sp-sun::after{animation:dayRing 3.5s ease-out 1.8s infinite}
+@keyframes dayRing{
+  0%{transform:scale(.7);opacity:0}
+  12%{opacity:1}
+  100%{transform:scale(2);opacity:0}
+}
+.sp-day .sp-rays{top:calc(18% + 40px);transform:translateX(-50%)}
+.splash.active.sp-day .sp-rays{
+  opacity:1;transition:opacity .5s ease 1s;
+  animation:rR 200s linear 0s infinite;
+}
+.sp-day .sp-ray{
+  width:2px;
+  background:linear-gradient(to top,
+    rgba(255,225,160,.2) 0%,
+    rgba(180,215,255,.12) 30%,
+    rgba(255,255,255,.05) 65%,
+    transparent 100%);
+  background-size:100% 280%;
+  background-position:0 100%;
+  transform-origin:bottom center;
+  clip-path:inset(100% 0 0 0);
+  filter:blur(.7px);
+}
+.splash.active.sp-day .sp-ray{
+  animation:dayRayBurst 1.4s cubic-bezier(.22,1,.36,1) var(--rd) forwards;
+}
+@keyframes dayRayBurst{
+  0%{clip-path:inset(100% 0 0 0);background-position:0 100%;opacity:0}
+  12%{opacity:1}
+  45%{clip-path:inset(35% 0 0 0);background-position:0 55%}
+  100%{clip-path:inset(0);background-position:0 0;opacity:1}
+}
+.sp-day .sp-ray::after{
+  content:'';position:absolute;bottom:0;left:-3px;
+  width:8px;height:25px;
+  background:radial-gradient(ellipse,rgba(255,255,255,.3),transparent);
+  opacity:0;pointer-events:none;
+}
+.splash.active.sp-day .sp-ray::after{
+  animation:dayRaySpark 1s ease-out calc(var(--rd) + .15s) forwards;
+}
+@keyframes dayRaySpark{
+  0%{bottom:0;opacity:0}
+  15%{opacity:1}
+  100%{bottom:88%;opacity:0}
+}
+.splash.sp-day-fade .sp-sky,
+.splash.sp-day-fade .sp-sun,
+.splash.sp-day-fade .sp-hz,
+.splash.sp-day-fade .sp-cnt,
+.splash.sp-day-fade .sp-sync,
+.splash.sp-day-fade .sp-tap{
+  opacity:0!important;
+  transition:opacity .8s cubic-bezier(.4,0,.2,1)!important;
+}
+.splash.active.sp-day.sp-day-out .sp-ray{
+  animation:dayRayReverse .7s ease-in var(--rdr) forwards;
+}
+.splash.active.sp-day.sp-day-out .sp-ray::after{animation:none;opacity:0}
+@keyframes dayRayReverse{
+  0%{clip-path:inset(0);opacity:1}
+  65%{opacity:.8}
+  100%{clip-path:inset(100% 0 0 0);opacity:0}
+}
 
 /* APPLE MINIMAL SPLASH */
 .sp-apple .sp-sky,
@@ -153,6 +250,8 @@ function showSplash(cb){
   const type=getSplashType();
   const sp=document.getElementById("splash");
   if(type==="none"){sp.classList.add("gone");cb();return}
+  let done=false,period="",autoTime=type==="apple"?3500:4200;
+
   document.getElementById("spGreet").textContent=getGreeting()+",";
   document.getElementById("spName").textContent=uName;
   const d=new Date(),wd=["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"],mo=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
@@ -165,18 +264,64 @@ function showSplash(cb){
   if(type==="apple"){
     sp.classList.add("sp-apple");
   }else{
-    const h=d.getHours(),period=h>=5&&h<12?"morning":h<17?"day":h<22?"evening":"night";
+    const h=d.getHours();
+    period=h>=5&&h<12?"morning":h<17?"day":h<22?"evening":"night";
     sp.classList.add("sp-"+period);
-    if(period==="night"||period==="evening"){const ct=period==="night"?70:20,el=document.getElementById("spStars");for(let i=0;i<ct;i++){const s=document.createElement("div");s.className="sp-star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*(period==="night"?90:55)+"%";const sz=1+Math.random()*2;s.style.width=s.style.height=sz+"px";s.style.setProperty("--dur",(2+Math.random()*4)+"s");s.style.setProperty("--del",(Math.random()*3)+"s");s.style.setProperty("--br",(.4+Math.random()*.5).toFixed(2));el.appendChild(s)}}
+
+    if(period==="night"||period==="evening"){
+      const ct=period==="night"?70:20,el=document.getElementById("spStars");
+      for(let i=0;i<ct;i++){const s=document.createElement("div");s.className="sp-star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*(period==="night"?90:55)+"%";const sz=1+Math.random()*2;s.style.width=s.style.height=sz+"px";s.style.setProperty("--dur",(2+Math.random()*4)+"s");s.style.setProperty("--del",(Math.random()*3)+"s");s.style.setProperty("--br",(.4+Math.random()*.5).toFixed(2));el.appendChild(s)}
+    }
+
     if(period!=="night")document.getElementById("spComet").style.display="none";
-    if(period!=="night"){const rc=period==="day"?12:8,el=document.getElementById("spRays");for(let i=0;i<rc;i++){const r=document.createElement("div");r.className="sp-ray";r.style.transform="rotate("+(i*(360/rc))+"deg)";el.appendChild(r)}}
-    if(period==="evening"){[72,68,64].forEach((b,i)=>{const a=document.createElement("div");a.className="sp-atm";a.style.bottom=b+"%";a.style.setProperty("--d",(1.5+i*.3)+"s");a.style.background="linear-gradient(90deg,transparent,rgba(255,"+(160-i*40)+",80,.03),transparent)";sp.appendChild(a)})}
+
+    if(period!=="night"){
+      const el=document.getElementById("spRays");
+      if(period==="day"){
+        const rc=18;
+        for(let i=0;i<rc;i++){
+          const r=document.createElement("div");
+          r.className="sp-ray";
+          r.style.transform="rotate("+(i*(360/rc))+"deg)";
+          r.style.height=(200+Math.random()*180)+"px";
+          r.style.setProperty("--rd",(1.2+i*.035+Math.random()*.08)+"s");
+          r.style.setProperty("--rdr",(i*.025)+"s");
+          r.style.width=(1.5+Math.random()*1.5)+"px";
+          el.appendChild(r);
+        }
+      }else{
+        const rc=8;
+        for(let i=0;i<rc;i++){const r=document.createElement("div");r.className="sp-ray";r.style.transform="rotate("+(i*(360/rc))+"deg)";el.appendChild(r)}
+      }
+    }
+
+    if(period==="day"){
+      autoTime=4800;
+      setTimeout(()=>{if(!done)sp.classList.add("sp-day-fade")},2800);
+      setTimeout(()=>{if(!done)sp.classList.add("sp-day-out")},3600);
+    }
+
+    if(period==="evening"){
+      [72,68,64].forEach((b,i)=>{const a=document.createElement("div");a.className="sp-atm";a.style.bottom=b+"%";a.style.setProperty("--d",(1.5+i*.3)+"s");a.style.background="linear-gradient(90deg,transparent,rgba(255,"+(160-i*40)+",80,.03),transparent)";sp.appendChild(a)})
+    }
   }
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>sp.classList.add("active")));
-  let done=false;const autoTime=type==="apple"?3500:4200;
-  function dismiss(){if(done)return;done=true;markSplash();haptic("light");sp.classList.add("out");setTimeout(()=>{sp.classList.add("gone");cb()},type==="apple"?1000:800)}
-  sp.onclick=dismiss;setTimeout(dismiss,autoTime);
+
+  function dismiss(){
+    if(done)return;done=true;markSplash();haptic("light");
+    if(sp.classList.contains("sp-day-out")){
+      sp.style.transition="opacity .4s ease";
+      sp.style.opacity="0";
+      setTimeout(()=>{sp.classList.add("gone");cb()},400);
+      return;
+    }
+    sp.classList.add("out");
+    setTimeout(()=>{sp.classList.add("gone");cb()},type==="apple"?1000:800);
+  }
+
+  sp.onclick=dismiss;
+  setTimeout(dismiss,autoTime);
 }
 function pluralL(n){if(n%10===1&&n%100!==11)return"урок";if(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))return"урока";return"уроков"}
 
@@ -261,7 +406,7 @@ function showDayToast(text){const dt=document.getElementById("dayToast");dt.text
 function updateNextWidget(){const w=document.getElementById("nlWidget");if(!settings.nextWidget){w.classList.add("hidden");return}const tk=todayKey(),lessons=getSched()[tk]||[],now=nowMin();let next=null;for(let i=0;i<lessons.length;i++){const{start,end}=parseRange(lessons[i].time),ovr=getOvr(tk,i);if(ovr&&ovr.type==="remove")continue;const d=ovr&&ovr.type==="replace"?ovr.subject:resolveSubj(tk,lessons[i].subject);if(now>=start&&now<end){for(let j=i+1;j<lessons.length;j++){const o2=getOvr(tk,j);if(o2&&o2.type==="remove")continue;const d2=o2&&o2.type==="replace"?o2.subject:resolveSubj(tk,lessons[j].subject);if(d2!=="—"){next=lessons[j];break}}break}if(now<start&&d!=="—"){next=lessons[i];break}}if(!next){w.classList.add("hidden");return}const o=getOvr(tk,getSched()[tk].indexOf(next)),ds=o&&o.type==="replace"?o.subject:resolveSubj(tk,next.subject),ns=parseRange(next.time),till=ns.start-now;if(till<0||till>240){w.classList.add("hidden");return}w.classList.remove("hidden");const nH='<div class="nl-icon">'+getSubjEmoji(next.subject)+'</div><div class="nl-cnt"><div class="nl-label">Следующий урок</div><div class="nl-subj">'+escH(ds)+'</div><div class="nl-meta">'+next.time+(next.room?" · "+next.room:"")+'</div></div><div class="nl-time">'+fmtMinShort(till)+'</div>';if(w._last!==nH){w.innerHTML=nH;w._last=nH}}
 function getSubjEmoji(raw){const parts=raw.split("/").map(s=>s.trim());for(const p of parts){const id=ALIAS[p];if(id){const s=SUBJ_LIST.find(x=>x.id===id);if(s)return s.em}}if(raw.includes("Обед"))return"🍽";if(raw.includes("Физ-ра"))return"🏃";if(raw.includes("Кл. час"))return"📋";return"📖"}
 function startTimer(){if(timerInt)clearInterval(timerInt);updateStatus();updateNextWidget();timerInt=setInterval(()=>{updateStatus();updateNextWidget();updateLiveCards()},1000)}
-function updateStatus(){const ban=document.getElementById("stBan"),tk=todayKey(),lessons=getSched()[tk]||[];if(!lessons.length){ban.className="st-ban";ban.innerHTML='<div class="st-subj small">Сегодня выходной 😴</div>';return}const now=nowMin();let curL=null,nextL=null;for(let i=0;i<lessons.length;i++){const{start,end}=parseRange(lessons[i].time),ovr=getOvr(tk,i);if(ovr&&ovr.type==="remove")continue;const d=ovr&&ovr.type==="replace"?ovr.subject:resolveSubj(tk,lessons[i].subject);if(now>=start&&now<end&&d!=="—"){curL={l:lessons[i],d};break}if(now<start&&!nextL&&d!=="—"){nextL={l:lessons[i],d};break}}if(curL){const{start,end}=parseRange(curL.l.time),left=end-now,pct=Math.min(100,((now-start)/(end-start))*100);ban.className="st-ban cur";ban.innerHTML='<div class="st-top"><span class="st-lbl">Сейчас</span><span class="st-time">Осталось '+fmtMin(left)+'</span></div><div class="st-subj">'+escH(curL.d)+'</div><div class="prog"><div class="prog-f" style="width:'+pct.toFixed(1)+'%"></div></div>'}else if(nextL){const ns=parseRange(nextL.l.time);ban.className="st-ban";ban.innerHTML='<div class="st-top"><span class="st-lbl">Перемена</span><span class="st-time">Через '+fmtMin(ns.start-now)+'</span></div><div class="st-subj">'+escH(nextL.d)+'</div>'}else{const f=lessons[0],fs=parseRange(f.time);if(now<fs.start){ban.className="st-ban";ban.innerHTML='<div class="st-top"><span class="st-lbl">До начала</span><span class="st-time">'+fmtMin(fs.start-now)+'</span></div><div class="st-subj small">Первый урок</div>'}else{ban.className="st-ban";ban.innerHTML='<div class="st-subj small">Уроки закончились 🎉</div>'}}}
+function updateStatus(){const ban=document.getElementById("stBan"),tk=todayKey(),lessons=getSched()[tk]||[];if(!lessons.length){ban.className="st-ban";ban.innerHTML='<div class="st-subj small">Сегодня выходной 😴</div>';return}const now=nowMin();let curL=null,nextL=null;for(let i=0;i<lessons.length;i++){const{start,end}=parseRange(lessons[i].time),ovr=getOvr(tk,i);if(ovr&&ovr.type==="remove")continue;const d=ovr&&ovr.type==="replace"?ovr.subject:resolveSubj(tk,lessons[i].subject);if(now>=start&&now<end&&d!=="—"){curL={l:lessons[i],d};break}if(now<start&&!nextL&&d!=="—"){nextL={l:lessons[i],d};break}}if(curL){const{start,end}=parseRange(curL.l.time),left=end-now,pct=Math.min(100,((now-start)/(end-start))*100);ban.className="st-ban cur";ban.innerHTML='<div class="st-top"><span class="st-lbl">Сейчас</span><span class="st-time">Осталось '+fmtMin(left)+'</span></div><div class="st-subj">'+escH(curL.d)+'</div><div class="prog"><div class="prog-f" style="width:'+pct.toFixed(1)+'%"></div></div>'}else if(nextL){const ns2=parseRange(nextL.l.time);ban.className="st-ban";ban.innerHTML='<div class="st-top"><span class="st-lbl">Перемена</span><span class="st-time">Через '+fmtMin(ns2.start-now)+'</span></div><div class="st-subj">'+escH(nextL.d)+'</div>'}else{const f=lessons[0],fs=parseRange(f.time);if(now<fs.start){ban.className="st-ban";ban.innerHTML='<div class="st-top"><span class="st-lbl">До начала</span><span class="st-time">'+fmtMin(fs.start-now)+'</span></div><div class="st-subj small">Первый урок</div>'}else{ban.className="st-ban";ban.innerHTML='<div class="st-subj small">Уроки закончились 🎉</div>'}}}
 function openHw(key,subj,time){haptic("light");hwEditKey=key;document.getElementById("hwLi").textContent=subj+" · "+time;document.getElementById("hwTa").value=hw[key]||"";document.getElementById("hwDel").style.display=hw[key]?"block":"none";openSheet("hwSh");setTimeout(()=>document.getElementById("hwTa").focus(),400)}
 function saveHw(){const v=document.getElementById("hwTa").value.trim();if(v)hw[hwEditKey]=v;else delete hw[hwEditKey];store("hw",hw);haptic("medium");closeSheet();refreshAllPanels();toast("Сохранено ✓")}
 function delHw(){delete hw[hwEditKey];store("hw",hw);haptic("medium");closeSheet();refreshAllPanels();toast("Удалено")}
