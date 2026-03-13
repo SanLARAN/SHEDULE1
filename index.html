@@ -102,7 +102,7 @@ const SCHED_11B={"ПН":[{time:"08:00–08:40",subject:"Кл. час",room:""},{
 const DKEYS=["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"],DKEYS_FULL=["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
 const SUBJ_LIST=[{id:"russian",name:"Русский язык",em:"📝"},{id:"math_p",name:"Математика (профиль)",em:"📐"},{id:"math_b",name:"Математика (база)",em:"🔢"},{id:"english",name:"Англ. язык",em:"🇬🇧"},{id:"history",name:"История",em:"📜"},{id:"social",name:"Обществознание",em:"⚖️"},{id:"physics",name:"Физика",em:"⚛️"},{id:"cs",name:"Информатика",em:"💻"},{id:"choreo",name:"Хореография",em:"💃"},{id:"biology",name:"Биология",em:"🧬"}];
 const ALIAS={"Рус. яз":"russian","Инф":"cs","Математика (П)":"math_p","Математика (Б)":"math_b","Русский язык":"russian","Математика (профиль)":"math_p","Математика (база)":"math_b","Англ. язык":"english","История":"history","Обществознание":"social","Физика":"physics","Информатика":"cs","Хореография":"choreo","Биология":"biology"};
-const ALWAYS=["Кл. час","Обед","Физ-ра"];const GRP_HIDE_RUS={1:"СР",2:"ВТ"};
+const ALWAYS=["Кл. час","Обед","Физ-ра"],GRP_HIDE_RUS={1:"СР",2:"ВТ"};
 const REP_EXTRAS=[{name:"Контрольная",em:"📋"},{name:"Самоподготовка",em:"📖"},{name:"Экскурсия",em:"🏫"},{name:"Консультация",em:"💬"}];
 const DEF_S={swipeEnabled:true,nextWidget:true,dynGreeting:true};
 const CLOUD_KEYS=["selClass","selSubj","rusGroup","hw","appS","dayOvr","onboarded","splashDate"];
@@ -154,7 +154,8 @@ function showSplash(cb){
 
   function dismiss(){
     if(done)return;done=true;markSplash();haptic("medium");
-    showScr("app");
+    cb(); // Call callback first to ensure app logic initializes
+    
     const appEl=document.getElementById("app");
     if(appEl){appEl.style.opacity='0';appEl.style.transform='scale(0.92) translateY(10px)';appEl.style.filter='blur(10px)'}
 
@@ -177,14 +178,14 @@ function showSplash(cb){
 
     if(appEl)requestAnimationFrame(()=>{appEl.style.transition='opacity 0.5s ease 0.1s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s, filter 0.5s ease 0.1s';appEl.style.opacity='1';appEl.style.transform='none';appEl.style.filter='blur(0)'});
 
-    setTimeout(()=>{sp.classList.add("gone");if(appEl){appEl.style.transition='';appEl.style.filter=''}cb()},700);
+    setTimeout(()=>{sp.classList.add("gone");if(appEl){appEl.style.transition='';appEl.style.filter=''} },700);
   }
   sp.onclick=dismiss;setTimeout(dismiss,4200);
 }
 function pluralL(n){if(n%10===1&&n%100!==11)return"урок";if(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))return"урока";return"уроков"}
 
 function init(){
-  if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#000000")}catch(e){}try{tg.setBackgroundColor("#000000")}catch(e){}const u=(tg.initDataUnsafe&&tg.initDataUnsafe.user)?tg.initDataUnsafe.user:null;if(u){uName=u.first_name||"Ученик";uPhoto=u.photo_url||null}}
+  if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#000000")}catch(e){}try{tg.setBackgroundColor("#000000")}catch(e){}const u=tg.initDataUnsafe?tg.initDataUnsafe.user:null;if(u){uName=u.first_name||"Ученик";uPhoto=u.photo_url||null}}
   syncFromCloud(()=>{
     selClass=loadSync("selClass","");
     selSubj=loadSync("selSubj",[]);
@@ -196,8 +197,7 @@ function init(){
     const hasGroup=selClass==="11A" || rusGroup>0;
     if(onboarded&&selClass&&selSubj.length&&hasGroup){
         initApp();
-        const a=document.getElementById("app");if(a)a.classList.remove("on");
-        showSplash(()=>{});
+        showSplash(()=>{ showScr("app"); });
     }
     else{const s=document.getElementById("splash");if(s)s.classList.add("gone");showScr("welcome")}
   })
@@ -252,7 +252,7 @@ function resolveSubj(day,raw){
   const id=ALIAS[raw];if(id&&selSubj.includes(id))return raw;if(!id)return raw;return"—"
 }
 
-function renderPanel(day,animate){const c=document.getElementById("ll_"+day);if(!c)return;c.innerHTML="";renderedPanels[day]=true;const lessons=getSched()[day]||[];if(!lessons.length){c.innerHTML='<div class="empty'+(animate?' anim-in':'')+'"><div class="empty-em">😴</div><div class="empty-t">Выходной</div><div class="empty-s">Никаких уроков, отдыхай!</div></div>';return}const now=nowMin(),isToday=day===todayKey();let num=0;lessons.forEach((l,i)=>{const ovr=getOvr(day,i),isCan=ovr&&ovr.type==="remove",isRep=ovr&&ovr.type==="replace";let disp=isRep?ovr.subject:resolveSubj(day,l.subject);const isSkip=disp==="—"&&!isCan,isLunch=l.subject==="Обед";if(!isLunch&&!isSkip&&!isCan)num++;const{start,end}=parseRange(l.time),isCur=isToday&&now>=start&&now<end&&!isSkip&&!isCan,isPast=isToday&&now>=end;const card=document.createElement("div");let cls="lcard";if(animate)cls+=" anim-in";if(isCur)cls+=" cur";if(isPast&&!isSkip&&!isCan)cls+=" past";if(isSkip)cls+=" skip";if(isCan)cls+=" cancelled";card.className=cls;card.dataset.idx=i;card.dataset.day=day;if(animate)card.style.animationDelay=(i*.055)+"s";const times=l.time.split(/[–—-]/),ts=times[0]?.trim()||"",te=times[1]?.trim()||"";let numL=isLunch?"🍽":isSkip||isCan?"—":num+" урок";let badge=isCan?'<div class="lcard-badge badge-cancel">Отменён</div>':isRep?'<div class="lcard-badge badge-replace">Замена</div>':"";let cdH="";if(isToday&&!isSkip&&!isCan){if(isCur)cdH='<div class="l-cd" data-cd><span class="dot"></span> Осталось '+fmtMin(end-now)+'</div>';else if(!isPast){const till=start-now;if(till>0&&till<=120)cdH='<div class="l-cd" data-cd>Через '+fmtMin(till)+'</div>'}}const hk=day+"_"+i,hasHw=!!hw[hk],hwP=hasHw&&!isSkip&&!isCan?'<div class="l-hw-p">📝 '+escH(hw[hk].substring(0,40))+(hw[hk].length>40?"…":"")+'</div>':"";let progH=isCur?'<div class="l-prog"><div class="l-prog-f" data-pf style="width:'+Math.min(100,((now-start)/(end-start))*100).toFixed(1)+'%"></div></div>':"";const showS=isCan?resolveSubj(day,l.subject):disp,mainI=isSkip?'<div class="l-subj" style="color:var(--text3)">Окно</div>':'<div class="l-subj">'+escH(showS)+'</div>'+(l.room&&!isCan?'<div class="l-room">'+escH(l.room)+'</div>':'')+cdH+hwP,canAct=!isSkip&&!isCan;card.innerHTML=badge+'<div class="lt-col"><div class="lt-n">'+numL+'</div><div class="lt-s">'+ts+'</div><div class="lt-e">'+te+'</div></div><div class="l-div"></div><div class="l-info">'+mainI+'</div>'+(canAct?'<div class="l-act"><button class="hw-b'+(hasHw?' has':'')+'" onclick="event.stopPropagation();openHw(\''+hk+'\',\''+escA(showS)+'\',\''+escA(l.time)+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button></div>':'')+progH;c.appendChild(card)})}
+function renderPanel(day,animate){const c=document.getElementById("ll_"+day);if(!c)return;c.innerHTML="";renderedPanels[day]=true;const lessons=getSched()[day]||[];if(!lessons.length){c.innerHTML='<div class="empty'+(animate?' anim-in':'')+'"><div class="empty-em">😴</div><div class="empty-t">Выходной</div><div class="empty-s">Никаких уроков, отдыхай!</div></div>';return}const now=nowMin(),isToday=day===todayKey();let num=0;lessons.forEach((l,i)=>{const ovr=getOvr(day,i),isCan=ovr&&ovr.type==="remove",isRep=ovr&&ovr.type==="replace";let disp=isRep?ovr.subject:resolveSubj(day,l.subject);const isSkip=disp==="—"&&!isCan,isLunch=l.subject==="Обед";if(!isLunch&&!isSkip&&!isCan)num++;const{start,end}=parseRange(l.time),isCur=isToday&&now>=start&&now<end&&!isSkip&&!isCan,isPast=isToday&&now>=end;const card=document.createElement("div");let cls="lcard";if(animate)cls+=" anim-in";if(isCur)cls+=" cur";if(isPast&&!isSkip&&!isCan)cls+=" past";if(isSkip)cls+=" skip";if(isCan)cls+=" cancelled";card.className=cls;card.dataset.idx=i;card.dataset.day=day;if(animate)card.style.animationDelay=(i*.055)+"s";const times=l.time.split(/[–—-]/),ts=times[0]?times[0].trim():"",te=times[1]?times[1].trim():"";let numL=isLunch?"🍽":isSkip||isCan?"—":num+" урок";let badge=isCan?'<div class="lcard-badge badge-cancel">Отменён</div>':isRep?'<div class="lcard-badge badge-replace">Замена</div>':"";let cdH="";if(isToday&&!isSkip&&!isCan){if(isCur)cdH='<div class="l-cd" data-cd><span class="dot"></span> Осталось '+fmtMin(end-now)+'</div>';else if(!isPast){const till=start-now;if(till>0&&till<=120)cdH='<div class="l-cd" data-cd>Через '+fmtMin(till)+'</div>'}}const hk=day+"_"+i,hasHw=!!hw[hk],hwP=hasHw&&!isSkip&&!isCan?'<div class="l-hw-p">📝 '+escH(hw[hk].substring(0,40))+(hw[hk].length>40?"…":"")+'</div>':"";let progH=isCur?'<div class="l-prog"><div class="l-prog-f" data-pf style="width:'+Math.min(100,((now-start)/(end-start))*100).toFixed(1)+'%"></div></div>':"";const showS=isCan?resolveSubj(day,l.subject):disp,mainI=isSkip?'<div class="l-subj" style="color:var(--text3)">Окно</div>':'<div class="l-subj">'+escH(showS)+'</div>'+(l.room&&!isCan?'<div class="l-room">'+escH(l.room)+'</div>':'')+cdH+hwP,canAct=!isSkip&&!isCan;card.innerHTML=badge+'<div class="lt-col"><div class="lt-n">'+numL+'</div><div class="lt-s">'+ts+'</div><div class="lt-e">'+te+'</div></div><div class="l-div"></div><div class="l-info">'+mainI+'</div>'+(canAct?'<div class="l-act"><button class="hw-b'+(hasHw?' has':'')+'" onclick="event.stopPropagation();openHw(\''+hk+'\',\''+escA(showS)+'\',\''+escA(l.time)+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button></div>':'')+progH;c.appendChild(card)})}
 function preRenderAdjacent(){const idx=DKEYS.indexOf(curDay);if(idx>0&&!renderedPanels[DKEYS[idx-1]])renderPanel(DKEYS[idx-1],false);if(idx<DKEYS.length-1&&!renderedPanels[DKEYS[idx+1]])renderPanel(DKEYS[idx+1],false)}
 function refreshAllPanels(){renderedPanels={};renderPanel(curDay,false);preRenderAdjacent();updateStatus();updateNextWidget()}
 
@@ -294,7 +294,6 @@ function setCls(c,el){haptic("light");selClass=c;store("selClass",c);el.parentEl
 function setGrp(n,el){haptic("light");rusGroup=n;store("rusGroup",String(n));el.parentElement.querySelectorAll(".seg-b").forEach(b=>b.classList.remove("on"));el.classList.add("on");el.closest(".set-item").querySelector(".set-lbl").textContent="Группа "+n;refreshAllPanels();toast("Группа "+n)}
 function toggleSubj(id,el){haptic("light");const x=selSubj.indexOf(id);if(x>=0)selSubj.splice(x,1);else selSubj.push(id);el.classList.toggle("on",selSubj.includes(id));store("selSubj",selSubj);refreshAllPanels()}
 function clearHw(){hw={};store("hw",hw);haptic("medium");closeSheet();refreshAllPanels();toast("Все ДЗ очищены")}
-
 function openSheet(id){activeSheet=id;const o=document.getElementById("ov"),s=document.getElementById(id);if(o)o.classList.add("vis");if(s)s.classList.add("open")}
 function closeSheet(){const o=document.getElementById("ov");if(o)o.classList.remove("vis");if(activeSheet){const s=document.getElementById(activeSheet);if(s)s.classList.remove("open");activeSheet=null}}
 function toast(msg,undoFn){const t=document.getElementById("toast");if(!t)return;t.innerHTML=escH(msg)+(undoFn?'<span class="toast-undo" id="tUndo">Вернуть</span>':"");t.classList.add("show");if(undoFn)setTimeout(()=>{const u=document.getElementById("tUndo");if(u)u.onclick=()=>{undoFn();t.classList.remove("show")}},0);clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),undoFn?5000:2200)}
