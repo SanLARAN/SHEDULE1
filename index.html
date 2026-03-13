@@ -78,7 +78,7 @@ body{font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,system-ui,san
 <body>
 <div class="splash" id="splash"><div class="sp-sky"></div><div class="sp-hz"></div><div class="sp-stars" id="spStars"></div><div class="sp-comet" id="spComet"></div><div class="sp-sun"></div><div class="sp-rays" id="spRays"></div><div class="sp-cnt"><div class="sp-row"><div class="sp-ri sp-greet" id="spGreet"></div></div><div class="sp-row"><div class="sp-ri sp-name" id="spName"></div></div><div class="sp-line"></div><div class="sp-row"><div class="sp-ri sp-date" id="spDate"></div></div><div class="sp-row"><div class="sp-ri sp-stat" id="spStat"></div></div></div><div class="sp-sync" id="spSync"></div><div class="sp-tap">нажми чтобы продолжить</div></div>
 <div class="scr" id="welcome"><div class="w-bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div><div class="w-cnt"><div class="w-emoji">📚</div><h1 class="w-title" id="wTitle">Привет!</h1><p class="w-sub">Твоё расписание — всегда под рукой.</p><button class="w-btn" onclick="goClassSel()">Начать</button></div></div>
-<div class="scr" id="classSel"><div class="s-hdr"><h2 class="s-title">Выбери класс</h2><p class="s-sub">Расписание зависит от класса</p></div><div class="g-wrap"><div class="g-card" id="clA" onclick="pickClass('11A')"><div class="g-num">11 А</div><div class="g-label">класс</div></div><div class="g-card" id="clB" onclick="pickClass('11B')"><div class="g-num">11 Б</div><div class="g-label">класс</div></div></div><button class="s-done" id="cDone" onclick="goSubjects()">Далее</button></div>
+<div class="scr" id="classSel"><div class="s-hdr"><h2 class="s-title">Выбери класс</h2><p class="s-sub">Расписание зависит от класса</p></div><div class="g-wrap"><div class="g-card" id="clA" onclick="pickClass('11A')"><div class="g-num">А</div><div class="g-label">класс</div></div><div class="g-card" id="clB" onclick="pickClass('11B')"><div class="g-num">Б</div><div class="g-label">класс</div></div></div><button class="s-done" id="cDone" onclick="goSubjects()">Далее</button></div>
 <div class="scr" id="subjects"><div class="s-hdr"><h2 class="s-title">Твои предметы</h2><p class="s-sub">Выбери те, на которые ходишь</p></div><div class="s-grid" id="sGrid"></div><button class="s-done" id="sDone" onclick="goGroupSel()">Далее</button></div>
 <div class="scr" id="groupSel"><div class="s-hdr"><h2 class="s-title">Группа по русскому</h2><p class="s-sub">В какие дни у тебя русский язык?</p></div><div class="g-wrap"><div class="g-card" id="gc1" onclick="pickGroup(1)"><div class="g-num">1</div><div class="g-label">группа</div><div class="g-days">ПН · ВТ · ЧТ</div></div><div class="g-card" id="gc2" onclick="pickGroup(2)"><div class="g-num">2</div><div class="g-label">группа</div><div class="g-days">ПН · СР · ЧТ</div></div></div><button class="s-done" id="gDone" onclick="finishSetup()">Продолжить</button></div>
 <div class="scr" id="app"><div class="a-hdr" id="aHdr"></div><div class="nl-widget hidden" id="nlWidget"></div><div class="st-ban" id="stBan"></div><div class="dt-wrap"><div class="dt-row" id="dtRow"></div></div><div class="swipe-area" id="swipeArea"><div class="swipe-track" id="swipeTrack"></div><div class="swipe-ind l" id="siL">‹</div><div class="swipe-ind r" id="siR">›</div><div class="day-toast" id="dayToast"></div></div></div>
@@ -105,7 +105,7 @@ function loadSync(k,fb){const v=localStorage.getItem(k);if(v===null||v==="")retu
 function removeKey(k){localStorage.removeItem(k);if(useCloud)CS.removeItem(k,()=>{})}
 function syncFromCloud(cb){if(!useCloud){cb();return}CS.getItems(CLOUD_KEYS,(e,r)=>{if(!e&&r)Object.keys(r).forEach(k=>{if(r[k])localStorage.setItem(k,r[k])});cb()})}
 
-let selClass="11B",selSubj=[],rusGroup=0,hw={},settings={},onboarded=false;
+let selClass="",selSubj=[],rusGroup=0,hw={},settings={},onboarded=false;
 let curDay,activeSheet=null,hwEditKey=null,timerInt=null,renderedPanels={};
 function getSched(){return selClass==="11A"?SCHED_11A:SCHED_11B}
 
@@ -127,7 +127,8 @@ function showSplash(cb){
   if(period!=="night")document.getElementById("spComet").style.display="none";
   if(period!=="night"){const rc=period==="day"?12:8,el=document.getElementById("spRays");for(let i=0;i<rc;i++){const r=document.createElement("div");r.className="sp-ray";r.style.transform="rotate("+(i*(360/rc))+"deg)";el.appendChild(r)}}
   if(period==="evening"){[72,68,64].forEach((b,i)=>{const a=document.createElement("div");a.className="sp-atm";a.style.bottom=b+"%";a.style.setProperty("--d",(1.5+i*.3)+"s");a.style.background="linear-gradient(90deg,transparent,rgba(255,"+(160-i*40)+",80,.03),transparent)";sp.appendChild(a)})}
-  document.getElementById("spGreet").textContent=getGreeting()+",";document.getElementById("spName").textContent=uName;
+  document.getElementById("spGreet").textContent=getGreeting()+",";
+  document.getElementById("spName").textContent=uName;
   const d=new Date(),wd=["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"],mo=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
   document.getElementById("spDate").textContent=wd[d.getDay()]+", "+d.getDate()+" "+mo[d.getMonth()];
   const tk=todayKey(),lessons=getSched()[tk]||[];let cnt=0,first="";
@@ -143,7 +144,7 @@ function pluralL(n){if(n%10===1&&n%100!==11)return"урок";if(n%10>=2&&n%10<=4
 function init(){
   if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#000000")}catch(e){}try{tg.setBackgroundColor("#000000")}catch(e){}const u=tg.initDataUnsafe?.user;if(u){uName=u.first_name||"Ученик";uPhoto=u.photo_url||null}}
   syncFromCloud(()=>{
-    selClass=loadSync("selClass","11B");
+    selClass=loadSync("selClass","");
     selSubj=loadSync("selSubj",[]);
     rusGroup=parseInt(loadSync("rusGroup",0))||0;
     hw=loadSync("hw",{});settings=Object.assign({},DEF_S,loadSync("appS",{}));
@@ -151,7 +152,7 @@ function init(){
     curDay=todayKey();loadOvr();
     document.getElementById("wTitle").textContent=getGreeting()+", "+uName+"!";
     const hasGroup=selClass==="11A" || rusGroup>0;
-    if(onboarded&&selSubj.length&&hasGroup)showSplash(()=>{showScr("app");initApp()});
+    if(onboarded&&selClass&&selSubj.length&&hasGroup)showSplash(()=>{showScr("app");initApp()});
     else{document.getElementById("splash").classList.add("gone");showScr("welcome")}
   })
 }
@@ -162,9 +163,15 @@ function showScr(id){document.querySelectorAll(".scr").forEach(s=>{if(s.id===id)
 
 function goClassSel(){haptic("medium");showScr("classSel");updClassUI()}
 function pickClass(c){haptic("light");selClass=c;store("selClass",c);updClassUI()}
-function updClassUI(){document.getElementById("clA").classList.toggle("sel",selClass==="11A");document.getElementById("clB").classList.toggle("sel",selClass==="11B")}
+function updClassUI(){
+  document.getElementById("clA").classList.toggle("sel",selClass==="11A");
+  document.getElementById("clB").classList.toggle("sel",selClass==="11B");
+  const b=document.getElementById("cDone");
+  b.classList.toggle("ok",!!selClass);
+  b.textContent=selClass?"Далее":"Выбери класс";
+}
 
-function goSubjects(){haptic("medium");showScr("subjects");renderChips()}
+function goSubjects(){if(!selClass)return;haptic("medium");showScr("subjects");renderChips()}
 function renderChips(){const g=document.getElementById("sGrid");g.innerHTML="";SUBJ_LIST.forEach((s,i)=>{const c=document.createElement("div");c.className="s-chip"+(selSubj.includes(s.id)?" sel":"");c.innerHTML='<span class="chip-em">'+s.em+'</span>'+s.name;c.style.animation="fUp .5s cubic-bezier(.22,1,.36,1) both";c.style.animationDelay=(.1+i*.05)+"s";c.onclick=()=>{haptic("light");const x=selSubj.indexOf(s.id);if(x>=0)selSubj.splice(x,1);else selSubj.push(s.id);c.classList.toggle("sel");updDone()};g.appendChild(c)});updDone()}
 function updDone(){const b=document.getElementById("sDone");b.classList.toggle("ok",selSubj.length>0);b.textContent=selSubj.length?"Далее ("+selSubj.length+")":"Выбери хотя бы один"}
 
@@ -219,7 +226,7 @@ function openHw(key,subj,time){haptic("light");hwEditKey=key;document.getElement
 function saveHw(){const v=document.getElementById("hwTa").value.trim();if(v)hw[hwEditKey]=v;else delete hw[hwEditKey];store("hw",hw);haptic("medium");closeSheet();refreshAllPanels();toast("Сохранено ✓")}
 function delHw(){delete hw[hwEditKey];store("hw",hw);haptic("medium");closeSheet();refreshAllPanels();toast("Удалено")}
 function openSettings(){haptic("light");renderSettingsBody();openSheet("setSh")}
-function renderSettingsBody(){let h='<div class="set-sep">Интерфейс</div>'+mkT("swipeEnabled","👆 Свайп между днями","Листай влево-вправо")+mkT("nextWidget","📌 Следующий урок","Виджет ближайшего урока")+mkT("dynGreeting","🌅 Приветствие","По времени суток")+'<div class="set-sep">Класс</div><div class="set-item"><div class="set-left"><div class="set-lbl">'+(selClass==="11A"?"11 А":"11 Б")+'</div><div class="set-desc">Класс обучения</div></div><div class="seg"><button class="seg-b'+(selClass==="11A"?" on":"")+'" onclick="setClass(\'11A\',this)">А</button><button class="seg-b'+(selClass==="11B"?" on":"")+'" onclick="setClass(\'11B\',this)">Б</button></div></div>';if(selClass==="11B"){h+='<div class="set-sep">Группа русского</div><div class="set-item"><div class="set-left"><div class="set-lbl">Группа '+rusGroup+'</div><div class="set-desc">Гр.1: ПН·ВТ·ЧТ — Гр.2: ПН·СР·ЧТ</div></div><div class="seg"><button class="seg-b'+(rusGroup===1?" on":"")+'" onclick="setGrp(1,this)">1</button><button class="seg-b'+(rusGroup===2?" on":"")+'" onclick="setGrp(2,this)">2</button></div></div>'}h+='<div class="set-sep">Предметы</div>';SUBJ_LIST.forEach(s=>{h+='<div class="subj-row"><span class="subj-em">'+s.em+'</span><span class="subj-name">'+s.name+'</span><button class="toggle'+(selSubj.includes(s.id)?" on":"")+'" onclick="toggleSubj(\''+s.id+'\',this)"></button></div>'});h+='<div class="set-sep">Данные</div><div class="set-item"><div class="set-left"><div class="set-lbl">Очистить все ДЗ</div></div><button class="set-btn dng" onclick="clearHw()">Очистить</button></div>';document.getElementById("setBody").innerHTML=h}
+function renderSettingsBody(){let h='<div class="set-sep">Интерфейс</div>'+mkT("swipeEnabled","👆 Свайп между днями","Листай влево-вправо")+mkT("nextWidget","📌 Следующий урок","Виджет ближайшего урока")+mkT("dynGreeting","🌅 Приветствие","По времени суток")+'<div class="set-sep">Класс</div><div class="set-item"><div class="set-left"><div class="set-lbl">'+(selClass==="11A"?"11 А":"11 Б")+'</div><div class="set-desc">Класс обучения</div></div><div class="seg"><button class="seg-b'+(selClass==="11A"?" on":"")+'" onclick="setClass(\'11A\',this)">А</button><button class="seg-b'+(selClass==="11B"?" on":"")+'" onclick="setClass(\'11B\',this)">Б</button></div></div>';if(selClass==="11B"){h+='<div class="set-sep">Группа русского</div><div class="set-item"><div class="set-left"><div class="set-lbl">Группа '+rusGroup+'</div><div class="set-desc">Гр.1: ПН·ВТ·ЧТ — Гр.2: ПН·СР·ЧТ</div></div><div class="seg"><button class="seg-b'+(rusGroup===1?" on":"")+'" onclick="setGrp(1,this)">1</button><button class="seg-b'+(rusGroup===2?" on":"")+'" onclick="setGrp(2,this)">2</button></div></div>'}h+='<div class="set-sep">Предметы</div>';SUBJ_LIST.forEach(s=>{const on=selSubj.includes(s.id);h+='<div class="subj-row"><span class="subj-em">'+s.em+'</span><span class="subj-name">'+s.name+'</span><button class="toggle'+(on?" on":"")+'" onclick="toggleSubj(\''+s.id+'\',this)"></button></div>'});h+='<div class="set-sep">Синхронизация</div><div class="set-item"><div class="set-left"><div class="set-lbl">☁️ Cloud Storage</div><div class="set-desc">'+(useCloud?"Данные синхронизируются через Telegram":"Недоступно — откройте через Telegram")+'</div></div></div><div class="set-sep">Данные</div><div class="set-item"><div class="set-left"><div class="set-lbl">Очистить все ДЗ</div></div><button class="set-btn dng" onclick="clearHw()">Очистить</button></div>';document.getElementById("setBody").innerHTML=h}
 function mkT(key,lbl,desc){return'<div class="set-item"><div class="set-left"><div class="set-lbl">'+lbl+'</div><div class="set-desc">'+desc+'</div></div><button class="toggle'+(settings[key]?" on":"")+'" onclick="toggleSett(\''+key+'\',this)"></button></div>'}
 function toggleSett(k,el){haptic("light");settings[k]=!settings[k];el.classList.toggle("on",settings[k]);store("appS",settings);if(k==="nextWidget")updateNextWidget();if(k==="dynGreeting")renderHdr()}
 function setClass(c,el){haptic("light");selClass=c;store("selClass",c);el.parentElement.querySelectorAll(".seg-b").forEach(b=>b.classList.remove("on"));el.classList.add("on");el.closest(".set-item").querySelector(".set-lbl").textContent=c==="11A"?"11 А":"11 Б";renderSettingsBody();refreshAllPanels();toast("Выбран "+c)}
